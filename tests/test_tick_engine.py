@@ -31,3 +31,35 @@ def test_mikage_acts_on_tick_5():
 
     assert actor is not None
     assert actor.name == "Mikage"
+
+
+def test_sequence_through_tick_10_matches_tick_sheet():
+    """
+    Validates the known acting order derived from the Tick sheet inputs
+    (TM gate = 1430.0; speeds: 340/282/270/265/252/250) under the
+    "one action per tick" foundation rule.
+
+    Expected:
+      Tick 5  -> Mikage
+      Tick 6  -> Mithrala
+      Tick 7  -> Tomblord
+      Tick 8  -> Coldheart
+      Tick 9  -> Martyr
+      Tick 10 -> Boss
+    """
+    actors = make_actors()
+
+    actions = []
+    for tick in range(1, 11):
+        actor = step_tick(actors)
+        if actor is not None:
+            actions.append((tick, actor.name))
+
+    assert actions == [
+        (5, "Mikage"),
+        (6, "Mithrala"),
+        (7, "Tomblord"),
+        (8, "Coldheart"),
+        (9, "Martyr"),
+        (10, "Boss"),
+]
