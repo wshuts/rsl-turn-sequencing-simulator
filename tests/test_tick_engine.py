@@ -4,12 +4,12 @@ from rsl_turn_sequencing.models import Actor
 
 def make_actors():
     return [
-        Actor("Mikage", 340),
-        Actor("Mithrala", 282),
-        Actor("Tomblord", 270),
-        Actor("Coldheart", 265),
-        Actor("Martyr", 252),
-        Actor("Boss", 250),
+        Actor("Mikage", 340.0),
+        Actor("Mithrala", 282.0),
+        Actor("Tomblord", 270.0),
+        Actor("Coldheart", 265.0),
+        Actor("Martyr", 252.0),
+        Actor("Boss", 250.0),
     ]
 
 
