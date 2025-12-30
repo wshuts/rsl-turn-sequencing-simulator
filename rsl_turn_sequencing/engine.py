@@ -43,3 +43,34 @@ def step_tick(actors: list[Actor]) -> Actor | None:
     # 4) act (for now, acting is just returning the actor) and reset TM to 0
     best.turn_meter = 0.0
     return best
+
+
+def step_tick_debug(actors: list[Actor]) -> tuple[Actor | None, list[float]]:
+    """
+    Advance the simulation by one global tick, returning:
+      (winner, turn_meters_before_reset)
+
+    This provides observability for traces/logging without changing the
+    core step_tick() behavior.
+    """
+    # 1) simultaneous fill
+    for a in actors:
+        a.turn_meter += float(a.speed)
+
+    # Snapshot AFTER fill, BEFORE any reset (this is the "winning snapshot")
+    before_reset = [float(a.turn_meter) for a in actors]
+
+    # 2) find all ready actors
+    ready_indexed = [(i, a) for (i, a) in enumerate(actors) if a.turn_meter + EPS >= TM_GATE]
+    if not ready_indexed:
+        return None, before_reset
+
+    # 3) choose actor: highest TM, then speed, then list order
+    _, best = max(
+        ready_indexed,
+        key=lambda t: (t[1].turn_meter, t[1].speed, -t[0]),
+    )
+
+    # 4) reset TM (overflow discarded)
+    best.turn_meter = 0.0
+    return best, before_reset

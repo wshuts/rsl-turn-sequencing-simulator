@@ -18,14 +18,21 @@ def main() -> None:
     log = run_ticks_with_trace(actors, 12)
 
     for entry in log:
-        print(f"\nTick {entry.tick:2d} | winner={entry.winner or '-'}")
+        if entry.winner is None:
+            print(f"\nTick {entry.tick:2d} | winner=-")
+        else:
+            # Show the pre-reset TM used to decide the winner
+            wb = entry.winner_before if entry.winner_before is not None else float("nan")
+            ui_wb = (wb / TM_GATE) * 100.0
+            print(f"\nTick {entry.tick:2d} | winner={entry.winner} (pre-reset TM={wb:7.1f}, UI={ui_wb:6.1f}%)")
 
         for a in entry.actors:
-            eligible = "*" if a.turn_meter >= TM_GATE else " "
+            # Eligibility is determined on the pre-reset ("winning snapshot") TM values
+            eligible = "*" if a.eligible_before else " "
             print(
                 f"  {a.name:<10s} "
-                f"TM={a.turn_meter:7.1f}  "
-                f"UI={a.ui_percent:6.1f}% {eligible}"
+                f"TM(pre)={a.turn_meter_before:7.1f}  UI(pre)={a.ui_percent_before:6.1f}% {eligible}  "
+                f"TM(post)={a.turn_meter_after:7.1f}"
             )
 
 
