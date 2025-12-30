@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from rsl_turn_sequencing.event_sink import EventSink
+from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor
 
 TM_GATE = 1430.0
 EPS = 1e-9
 
 
-def step_tick(actors: list[Actor]) -> Actor | None:
+def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor | None:
     """
     Advance the simulation by one global tick.
 
@@ -22,6 +24,10 @@ def step_tick(actors: list[Actor]) -> Actor | None:
     - If equal, higher speed wins
     - If still equal, earlier in the list wins
     """
+    if event_sink is not None:
+        event_sink.start_tick()
+        event_sink.emit(EventType.TICK_START)
+
     # 1) simultaneous fill
     for a in actors:
         eff_speed = float(a.speed) * float(a.speed_multiplier)
@@ -41,8 +47,19 @@ def step_tick(actors: list[Actor]) -> Actor | None:
         key=lambda t: (t[1].turn_meter, t[1].speed, -t[0]),
     )
 
+    if event_sink is not None:
+        event_sink.emit(
+            EventType.WINNER_SELECTED,
+            actor=best.name,
+            actor_index=i_best,
+            pre_reset_tm=float(best.turn_meter),
+        )
+
     # 4) act (for now, acting is just returning the actor) and reset TM to 0
     best.turn_meter = 0.0
+
+    if event_sink is not None:
+        event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
     return best
 
 
