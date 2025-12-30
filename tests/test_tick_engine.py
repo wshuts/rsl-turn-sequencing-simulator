@@ -62,4 +62,31 @@ def test_sequence_through_tick_10_matches_tick_sheet():
         (8, "Coldheart"),
         (9, "Martyr"),
         (10, "Boss"),
-]
+    ]
+
+
+def test_decrease_speed_multiplier_delays_turn_gate_crossing():
+    """
+    If Mikage is under a -30% SPD effect (multiplier 0.7), she should NOT
+    reach the TM gate on tick 5 anymore (340 * 0.7 * 5 = 1190 < 1430).
+    The first action should occur on tick 6 (Mithrala), matching the
+    gate-then-tie-break model.
+    """
+    actors = make_actors()
+
+    # Apply Decrease SPD to Mikage only
+    for a in actors:
+        if a.name == "Mikage":
+            a.speed_multiplier = 0.7
+            break
+
+    # Tick 1-5: nobody acts
+    actor = None
+    for _ in range(5):
+        actor = step_tick(actors)
+    assert actor is None
+
+    # Tick 6: Mithrala is now the first to act
+    actor = step_tick(actors)
+    assert actor is not None
+    assert actor.name == "Mithrala"

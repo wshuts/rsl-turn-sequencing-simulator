@@ -24,7 +24,8 @@ def step_tick(actors: list[Actor]) -> Actor | None:
     """
     # 1) simultaneous fill
     for a in actors:
-        a.turn_meter += float(a.speed)
+        eff_speed = float(a.speed) * float(a.speed_multiplier)
+        a.turn_meter += eff_speed
 
     # 2) find all ready actors
     ready = [a for a in actors if a.turn_meter + EPS >= TM_GATE]
@@ -55,7 +56,8 @@ def step_tick_debug(actors: list[Actor]) -> tuple[Actor | None, list[float]]:
     """
     # 1) simultaneous fill
     for a in actors:
-        a.turn_meter += float(a.speed)
+        eff_speed = float(a.speed) * float(a.speed_multiplier)
+        a.turn_meter += eff_speed
 
     # Snapshot AFTER fill, BEFORE any reset (this is the "winning snapshot")
     before_reset = [float(a.turn_meter) for a in actors]
