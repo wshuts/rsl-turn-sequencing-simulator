@@ -57,12 +57,14 @@ def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor
             actor_index=i_best,
             pre_reset_tm=float(best.turn_meter),
         )
+        event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
 
     # 4) act (for now, acting is just returning the actor) and reset TM to 0
     best.turn_meter = 0.0
 
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
+        event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
     return best
 
 

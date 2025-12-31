@@ -20,7 +20,7 @@ def test_event_order_on_first_action_tick():
     Asserts causality ordering (not formatting/visuals):
       - Each tick emits TICK_START first.
       - On the first action tick (tick 5 baseline), we see:
-          TICK_START -> FILL_COMPLETE -> WINNER_SELECTED -> RESET_APPLIED
+          TICK_START -> FILL_COMPLETE -> WINNER_SELECTED -> TURN_START -> RESET_APPLIED -> TURN_END
       - Winner is Mikage on that first action tick.
     """
     actors = make_actors()
@@ -35,12 +35,14 @@ def test_event_order_on_first_action_tick():
         EventType.TICK_START,
         EventType.FILL_COMPLETE,
         EventType.WINNER_SELECTED,
+        EventType.TURN_START,
         EventType.RESET_APPLIED,
+        EventType.TURN_END,
     ]
 
     winner_evt = tick5[2]
     assert winner_evt.actor == "Mikage"
     assert float(winner_evt.data["pre_reset_tm"]) > 0.0
 
-    reset_evt = tick5[3]
+    reset_evt = tick5[4]
     assert reset_evt.actor == "Mikage"

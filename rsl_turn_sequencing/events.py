@@ -14,7 +14,9 @@ class EventType(str, Enum):
     TICK_START = "TICK_START"
     FILL_COMPLETE = "FILL_COMPLETE"
     WINNER_SELECTED = "WINNER_SELECTED"
+    TURN_START = "TURN_START"
     RESET_APPLIED = "RESET_APPLIED"
+    TURN_END = "TURN_END"
 
 
 @dataclass(frozen=True, slots=True)
