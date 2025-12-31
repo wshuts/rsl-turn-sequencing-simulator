@@ -34,7 +34,7 @@ class InMemoryEventSink(EventSink):
     events: list[Event] = field(default_factory=list)
     _tick: int = field(default=0, init=False)
     _seq: int = field(default=0, init=False)
-    snapshots: dict[tuple[int, str], object] = field(default_factory=dict)
+    snapshots: dict[tuple[int, str], dict[str, Any]] = field(default_factory=dict)
 
     @property
     def current_tick(self) -> int:
@@ -59,5 +59,5 @@ class InMemoryEventSink(EventSink):
             )
         )
 
-    def capture_snapshot(self, *, turn: int, phase: str, snapshot: object) -> None:
+    def capture_snapshot(self, *, turn: int, phase: str, snapshot: dict[str, Any]) -> None:
         self.snapshots[(turn, phase)] = snapshot
