@@ -10,10 +10,10 @@ EPS = 1e-9
 
 
 def step_tick(
-    actors: list[Actor],
-    event_sink: EventSink | None = None,
-    *,
-    snapshot_capture: set[int] | None = None,
+        actors: list[Actor],
+        event_sink: EventSink | None = None,
+        *,
+        snapshot_capture: set[int] | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -77,9 +77,9 @@ def step_tick(
 
         # Optional snapshot capture at TURN_END (observer-only)
         if (
-            snapshot_capture is not None
-            and event_sink.current_tick in snapshot_capture
-            and hasattr(event_sink, "capture_snapshot")
+                snapshot_capture is not None
+                and event_sink.current_tick in snapshot_capture
+                and hasattr(event_sink, "capture_snapshot")
         ):
             event_sink.capture_snapshot(
                 turn=event_sink.current_tick,

@@ -23,6 +23,7 @@ class EventSink(ABC):
     @abstractmethod
     def current_tick(self) -> int: ...
 
+
 @dataclass
 class InMemoryEventSink(EventSink):
     """
