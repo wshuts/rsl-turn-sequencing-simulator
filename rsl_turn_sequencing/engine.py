@@ -9,7 +9,12 @@ TM_GATE = 1430.0
 EPS = 1e-9
 
 
-def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor | None:
+def step_tick(
+    actors: list[Actor],
+    event_sink: EventSink | None = None,
+    *,
+    snapshot_capture: set[int] | None = None,
+) -> Actor | None:
     """
     Advance the simulation by one global tick.
 
@@ -69,6 +74,30 @@ def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
         event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
+
+        # Optional snapshot capture at TURN_END (observer-only)
+        if (
+            snapshot_capture is not None
+            and event_sink.current_tick in snapshot_capture
+            and hasattr(event_sink, "capture_snapshot")
+        ):
+            event_sink.capture_snapshot(
+                turn=event_sink.current_tick,
+                phase=EventType.TURN_END,
+                snapshot={
+                    "actor": best.name,
+                    "actors": [
+                        {
+                            "name": a.name,
+                            "turn_meter": float(a.turn_meter),
+                            "speed": float(a.speed),
+                            "speed_multiplier": float(a.speed_multiplier),
+                        }
+                        for a in actors
+                    ],
+                },
+            )
+
         event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
 
     # Effect semantics (observer-faithful):

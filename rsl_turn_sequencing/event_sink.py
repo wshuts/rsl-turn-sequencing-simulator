@@ -19,6 +19,9 @@ class EventSink(ABC):
     @abstractmethod
     def emit(self, event_type: EventType, actor: str | None = None, **data: Any) -> None: ...
 
+    @property
+    @abstractmethod
+    def current_tick(self) -> int: ...
 
 @dataclass
 class InMemoryEventSink(EventSink):
@@ -30,6 +33,7 @@ class InMemoryEventSink(EventSink):
     events: list[Event] = field(default_factory=list)
     _tick: int = field(default=0, init=False)
     _seq: int = field(default=0, init=False)
+    snapshots: dict[tuple[int, str], object] = field(default_factory=dict)
 
     @property
     def current_tick(self) -> int:
@@ -53,3 +57,6 @@ class InMemoryEventSink(EventSink):
                 data=dict(data),
             )
         )
+
+    def capture_snapshot(self, *, turn: int, phase: str, snapshot: object) -> None:
+        self.snapshots[(turn, phase)] = snapshot
