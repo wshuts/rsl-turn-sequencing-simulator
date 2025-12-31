@@ -42,5 +42,5 @@ def test_event_order_on_first_action_tick():
     assert winner_evt.actor == "Mikage"
     assert float(winner_evt.data["pre_reset_tm"]) > 0.0
 
-    reset_evt = tick5[2]
+    reset_evt = tick5[3]
     assert reset_evt.actor == "Mikage"
