@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.engine import TM_GATE
+from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.trace import run_ticks_with_trace
 
 

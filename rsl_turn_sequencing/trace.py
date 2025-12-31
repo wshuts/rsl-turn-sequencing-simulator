@@ -28,10 +28,10 @@ class TickTrace:
 
 
 def snapshot_tick(
-    tick: int,
-    actors: list[Actor],
-    winner: Actor | None,
-    before_reset: list[float],
+        tick: int,
+        actors: list[Actor],
+        winner: Actor | None,
+        before_reset: list[float],
 ) -> TickTrace:
     """
     Create a trace snapshot for the current tick.

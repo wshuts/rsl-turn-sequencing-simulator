@@ -1,5 +1,5 @@
-from rsl_turn_sequencing.engine import step_tick
 from rsl_turn_sequencing.effects import Effect, EffectKind
+from rsl_turn_sequencing.engine import step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor
