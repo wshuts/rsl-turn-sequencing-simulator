@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from rsl_turn_sequencing.effects import Effect
 
 
 @dataclass
@@ -10,3 +12,4 @@ class Actor:
     # 1.0 means no change; 0.7 means -30% speed.
     speed_multiplier: float = 1.0
     turn_meter: float = 0.0
+    effects: list[Effect] = field(default_factory=list)

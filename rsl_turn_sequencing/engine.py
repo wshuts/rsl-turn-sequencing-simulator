@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rsl_turn_sequencing.event_sink import EventSink
 from rsl_turn_sequencing.events import EventType
+from rsl_turn_sequencing.effects import decrement_turn_end, speed_multiplier_from_effects
 from rsl_turn_sequencing.models import Actor
 
 TM_GATE = 1430.0
@@ -30,7 +31,11 @@ def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor
 
     # 1) simultaneous fill
     for a in actors:
-        eff_speed = float(a.speed) * float(a.speed_multiplier)
+        eff_speed = (
+            float(a.speed)
+            * float(a.speed_multiplier)
+            * float(speed_multiplier_from_effects(a.effects))
+        )
         a.turn_meter += eff_speed
 
     if event_sink is not None:
@@ -65,6 +70,19 @@ def step_tick(actors: list[Actor], event_sink: EventSink | None = None) -> Actor
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
         event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
+
+    # Effect semantics (observer-faithful):
+    # - Duration decrements at TURN_END of the affected actor (including extra turns later).
+    remaining, expired = decrement_turn_end(best.effects)
+    best.effects = remaining
+    if event_sink is not None:
+        for e in expired:
+            event_sink.emit(
+                EventType.EFFECT_EXPIRED,
+                actor=best.name,
+                actor_index=i_best,
+                effect=str(e.kind),
+            )
     return best
 
 
