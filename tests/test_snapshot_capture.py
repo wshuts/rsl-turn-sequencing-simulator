@@ -50,3 +50,15 @@ def test_snapshot_captured_at_turn_end_for_requested_turn():
         "Martyr",
         "Boss",
     ]
+
+
+def test_no_snapshot_captured_when_not_requested():
+    actors = make_actors()
+    sink = InMemoryEventSink()
+
+    # Advance several turns with no snapshot_capture argument
+    for _ in range(5):
+        step_tick(
+            actors,
+            event_sink=sink,
+        )
