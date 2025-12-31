@@ -1,6 +1,6 @@
 from rsl_turn_sequencing.engine import step_tick
-from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
+from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor
 
 
@@ -20,7 +20,7 @@ def test_event_order_on_first_action_tick():
     Asserts causality ordering (not formatting/visuals):
       - Each tick emits TICK_START first.
       - On the first action tick (tick 5 baseline), we see:
-          TICK_START -> WINNER_SELECTED -> RESET_APPLIED
+          TICK_START -> FILL_COMPLETE -> WINNER_SELECTED -> RESET_APPLIED
       - Winner is Mikage on that first action tick.
     """
     actors = make_actors()
@@ -33,11 +33,12 @@ def test_event_order_on_first_action_tick():
     tick5 = [e for e in sink.events if e.tick == 5]
     assert [e.type for e in tick5] == [
         EventType.TICK_START,
+        EventType.FILL_COMPLETE,
         EventType.WINNER_SELECTED,
         EventType.RESET_APPLIED,
     ]
 
-    winner_evt = tick5[1]
+    winner_evt = tick5[2]
     assert winner_evt.actor == "Mikage"
     assert float(winner_evt.data["pre_reset_tm"]) > 0.0
 
