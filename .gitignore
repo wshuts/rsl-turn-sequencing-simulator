@@ -18,3 +18,4 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+/rsl_turn_sequencing.zip
