@@ -7,26 +7,28 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ## EPIC A — Core Timing & Effect Semantics (Engine Truth)
 
-### A1. Duration-based Decrease SPD (Next-tick expiration)
-- [ ] Represent Decrease SPD debuff with:
+### A1. Duration-based Decrease SPD (TURN_END expiration)
+- [x] Represent Decrease SPD debuff with:
   - magnitude (e.g., 0.7)
-  - remaining tick duration
-- [ ] Decrement duration at a **single, consistent tick boundary**
-- [ ] While active:
-  - affects effective speed during tick fill
-- [ ] On expiration or cleanse:
-  - effective speed changes **starting next tick**
-- [ ] Validation:
-  - reproduces still-frame baseline where two champions
-    are slowed for several ticks, then cleansed
-- [ ] Tests assert:
-  - tick-by-tick effective speed
+  - remaining **turn** duration
+- [x] Decrement duration at a **single, consistent event boundary**:
+  - `TURN_END` of the affected actor
+- [x] While active:
+  - affects effective speed during turn meter fill
+- [ ] On cleanse:
+  - effective speed changes starting **next fill cycle** *(explicitly out of scope for A1)*
+- [x] Validation:
+  - tests prove Decrease SPD applies and expires correctly
+    relative to TURN_END
+- [x] Tests assert:
+  - effective speed while active
   - correct expiration timing
-  - no retroactive tick effects
+  - no retroactive effect on completed turns
 
 **Acceptance Criteria**
-- No ambiguity about when speed changes take effect
-- Cleanse never alters an already-computed tick
+- Effect lifetime is governed by turn events, not ticks
+- Battle clock is responsible only for turn ordering
+- No ambiguity about when Decrease SPD expires
 
 ---
 
