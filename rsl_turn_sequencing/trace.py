@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rsl_turn_sequencing.engine import EPS, TM_GATE, step_tick_debug
+from rsl_turn_sequencing.engine import EPS, TM_GATE, step_tick
+from rsl_turn_sequencing.event_sink import InMemoryEventSink
+from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor
 
 
@@ -83,11 +85,23 @@ def run_ticks_with_trace(actors: list[Actor], num_ticks: int) -> list[TickTrace]
     Run the simulation for num_ticks global ticks, returning a per-tick trace log.
 
     Notes:
-    - Uses engine.step_tick_debug() for behavior (same rules) + observability.
+    - Uses engine.step_tick() for behavior.
+    - Derives observability from the structured event stream (Epic B).
     - Adds observability only (no rule changes).
     """
+    sink = InMemoryEventSink()
     log: list[TickTrace] = []
-    for t in range(1, num_ticks + 1):
-        winner, before_reset = step_tick_debug(actors)
-        log.append(snapshot_tick(t, actors, winner, before_reset))
+    for _ in range(num_ticks):
+        winner = step_tick(actors, event_sink=sink)
+        tick = sink.current_tick
+
+        tick_events = [e for e in sink.events if e.tick == tick]
+        fill_evt = next((e for e in tick_events if e.type == EventType.FILL_COMPLETE), None)
+        if fill_evt is not None and "meters" in fill_evt.data:
+            before_reset = [float(m["turn_meter"]) for m in fill_evt.data["meters"]]
+        else:
+            # Extra-turn ticks have no fill; fall back to current meters.
+            before_reset = [float(a.turn_meter) for a in actors]
+
+        log.append(snapshot_tick(tick, actors, winner, before_reset))
     return log

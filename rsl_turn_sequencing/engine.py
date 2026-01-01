@@ -59,7 +59,16 @@ def step_tick(
             a.turn_meter += eff_speed
 
         if event_sink is not None:
-            event_sink.emit(EventType.FILL_COMPLETE)
+            event_sink.emit(
+                EventType.FILL_COMPLETE,
+                meters=[
+                    {
+                        "name": a.name,
+                        "turn_meter": float(a.turn_meter),
+                    }
+                    for a in actors
+                ],
+            )
 
         # 2) find all ready actors
         ready = [a for a in actors if a.turn_meter + EPS >= TM_GATE]

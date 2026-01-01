@@ -46,3 +46,7 @@ def test_event_order_on_first_action_tick():
 
     reset_evt = tick5[4]
     assert reset_evt.actor == "Mikage"
+
+    fill_evt = tick5[1]
+    assert "meters" in fill_evt.data
+    assert len(fill_evt.data["meters"]) == len(actors)
