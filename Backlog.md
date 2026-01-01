@@ -5,7 +5,11 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
 
-## EPIC A — Core Timing & Effect Semantics (Engine Truth)
+## EPIC A — Core Timing & Effect Semantics (Engine Truth) ✅ COMPLETE
+
+> Epic A establishes **engine truth** for turn ordering, effect triggering,
+> duration decrement, expiration semantics, and extra turns.
+> All timing boundaries are now explicit, test-locked, and intentional.
 
 ### A1. Duration-based Decrease SPD (TURN_END expiration)
 - [x] Represent Decrease SPD debuff with:
@@ -29,6 +33,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 - Effect lifetime is governed by turn events, not ticks
 - Battle clock is responsible only for turn ordering
 - No ambiguity about when Decrease SPD expires
+**Status:** ✅ DONE
 
 ---
 
@@ -50,6 +55,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 **Acceptance Criteria**
 - TURN_START is a first-class timing boundary
 - Extra turns do not advance tick-based durations
+**Status:** ✅ DONE
 
 ---
 
@@ -77,6 +83,8 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 **Acceptance Criteria**
 - Simulator output can be fully reconstructed from events
 - Tests validate behavior without relying on visuals or logs
+
+**Status:** ▶️ ACTIVE NEXT STEP
 
 ---
 
