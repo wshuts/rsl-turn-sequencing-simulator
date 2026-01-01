@@ -18,13 +18,13 @@ def events_at_tick(sink: InMemoryEventSink, tick: int):
     return [e for e in sink.events if e.tick == tick]
 
 
-def test_poison_triggers_at_turn_start_decrements_at_turn_end_and_works_on_extra_turns():
+def test_poison_triggers_and_decrements_at_turn_start_and_works_on_extra_turns():
     """
     A2: Poison is the canonical TURN_START-triggered effect.
 
     Locked semantics:
       - Trigger: TURN_START
-      - Duration decrement: TURN_END of the affected actor
+      - Duration decrement: TURN_START (Poison special case)
       - Extra turns: do NOT perform meter fill, but still fire TURN_START triggers
     """
     a = Actor("A", 340.0, max_hp=1000.0, hp=1000.0)
@@ -48,7 +48,7 @@ def test_poison_triggers_at_turn_start_decrements_at_turn_end_and_works_on_extra
     assert types.index(EventType.EFFECT_TRIGGERED) > types.index(EventType.TURN_START)
     assert types.index(EventType.EFFECT_TRIGGERED) < types.index(EventType.TURN_END)
 
-    # Duration decrements at TURN_END, so after the turn resolves it should be 1.
+    # Duration decrements at TURN_START, so after the turn resolves it should still be 1.
     assert a.effects[0].kind == EffectKind.POISON
     assert a.effects[0].turns_remaining == 1
 
@@ -67,11 +67,13 @@ def test_poison_triggers_at_turn_start_decrements_at_turn_end_and_works_on_extra
     # After TURN_END, poison should expire (2 total triggers).
     assert a.effects == []
 
-    # Event proof: on this tick we should see EFFECT_TRIGGERED and EFFECT_EXPIRED.
+    # Event proof: on this tick we should see EFFECT_TRIGGERED and EFFECT_EXPIRED
+    # BEFORE TURN_END, because Poison expires at TURN_START.
     t2 = sink.current_tick
     types2 = [e.type for e in events_at_tick(sink, t2)]
     assert EventType.TURN_START in types2
     assert EventType.EFFECT_TRIGGERED in types2
     assert EventType.TURN_END in types2
     assert EventType.EFFECT_EXPIRED in types2
-    assert types2.index(EventType.EFFECT_EXPIRED) > types2.index(EventType.TURN_END)
+    assert types2.index(EventType.EFFECT_EXPIRED) > types2.index(EventType.EFFECT_TRIGGERED)
+    assert types2.index(EventType.EFFECT_EXPIRED) < types2.index(EventType.TURN_END)

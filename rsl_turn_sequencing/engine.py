@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from rsl_turn_sequencing.effects import (
+    apply_turn_start_effects,
     decrement_turn_end,
-    poison_damage_from_effects,
     speed_multiplier_from_effects,
 )
 from rsl_turn_sequencing.event_sink import EventSink
@@ -90,8 +90,9 @@ def step_tick(
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
         event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
 
-    # TURN_START-triggered effects (A2): apply poison damage now.
-    poison_dmg = poison_damage_from_effects(best.effects)
+    # TURN_START-triggered effects (A2): Poison triggers and decrements at TURN_START.
+    remaining_start, expired_start, poison_dmg = apply_turn_start_effects(best.effects)
+    best.effects = remaining_start
     if poison_dmg > 0 and float(best.max_hp) > 0:
         best.hp = max(0.0, float(best.hp) - float(poison_dmg))
         if event_sink is not None:
@@ -101,6 +102,17 @@ def step_tick(
                 actor_index=i_best,
                 effect="POISON",
                 amount=float(poison_dmg),
+                phase=EventType.TURN_START,
+            )
+
+    # If any TURN_START effects expired (e.g., Poison), emit expiration now.
+    if event_sink is not None:
+        for e in expired_start:
+            event_sink.emit(
+                EventType.EFFECT_EXPIRED,
+                actor=best.name,
+                actor_index=i_best,
+                effect=str(e.kind),
                 phase=EventType.TURN_START,
             )
 

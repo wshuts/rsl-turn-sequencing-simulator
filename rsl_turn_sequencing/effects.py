@@ -18,9 +18,9 @@ class EffectKind(str, Enum):
 class Effect:
     """
     Observer-faithful duration model:
-      - 'turns_remaining' decrements on TURN_END of the affected actor.
-      - duration=1 means the effect persists through exactly one of that actor's turns,
-        then expires at TURN_END.
+      - Most effects: 'turns_remaining' decrements on TURN_END of the affected actor.
+      - Poison is a special case: it triggers at TURN_START and decrements at TURN_START.
+      - duration=1 means the effect triggers once more for that actor, then expires.
     """
 
     kind: EffectKind
@@ -55,6 +55,38 @@ def poison_damage_from_effects(effects: Iterable[Effect]) -> float:
     return dmg
 
 
+def apply_turn_start_effects(effects: List[Effect]) -> Tuple[List[Effect], List[Effect], float]:
+    """
+    Apply TURN_START-triggered effects and update their durations.
+
+    Special case: Poison decrements at TURN_START.
+
+    Returns: (remaining_effects, expired_effects, poison_damage)
+    """
+    remaining: List[Effect] = []
+    expired: List[Effect] = []
+    poison_dmg = 0.0
+
+    for e in effects:
+        if e.turns_remaining <= 0:
+            expired.append(e)
+            continue
+
+        if e.kind == EffectKind.POISON:
+            poison_dmg += float(e.magnitude)
+            new_n = int(e.turns_remaining) - 1
+            if new_n <= 0:
+                expired.append(Effect(kind=e.kind, turns_remaining=0, magnitude=e.magnitude))
+            else:
+                remaining.append(Effect(kind=e.kind, turns_remaining=new_n, magnitude=e.magnitude))
+            continue
+
+        # Non-poison effects are unchanged at TURN_START.
+        remaining.append(e)
+
+    return remaining, expired, poison_dmg
+
+
 def decrement_turn_end(effects: List[Effect]) -> Tuple[List[Effect], List[Effect]]:
     """
     Decrement durations at TURN_END for the affected actor.
@@ -66,6 +98,12 @@ def decrement_turn_end(effects: List[Effect]) -> Tuple[List[Effect], List[Effect
         if e.turns_remaining <= 0:
             expired.append(e)
             continue
+
+        # Poison duration is handled at TURN_START.
+        if e.kind == EffectKind.POISON:
+            remaining.append(e)
+            continue
+
         new_n = int(e.turns_remaining) - 1
         if new_n <= 0:
             expired.append(Effect(kind=e.kind, turns_remaining=0, magnitude=e.magnitude))
