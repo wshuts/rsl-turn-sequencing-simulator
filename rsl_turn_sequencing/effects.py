@@ -11,6 +11,7 @@ class EffectKind(str, Enum):
     """
 
     DECREASE_SPD = "DECREASE_SPD"
+    POISON = "POISON"
 
 
 @dataclass(slots=True)
@@ -41,6 +42,17 @@ def speed_multiplier_from_effects(effects: Iterable[Effect]) -> float:
             mag = max(0.0, min(1.0, float(e.magnitude)))
             mult *= (1.0 - mag)
     return mult
+
+
+def poison_damage_from_effects(effects: Iterable[Effect]) -> float:
+    """Return total Poison damage to apply at TURN_START."""
+    dmg = 0.0
+    for e in effects:
+        if e.turns_remaining <= 0:
+            continue
+        if e.kind == EffectKind.POISON:
+            dmg += float(e.magnitude)
+    return dmg
 
 
 def decrement_turn_end(effects: List[Effect]) -> Tuple[List[Effect], List[Effect]]:

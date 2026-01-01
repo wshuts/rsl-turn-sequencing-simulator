@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from rsl_turn_sequencing.effects import decrement_turn_end, speed_multiplier_from_effects
+from rsl_turn_sequencing.effects import (
+    decrement_turn_end,
+    poison_damage_from_effects,
+    speed_multiplier_from_effects,
+)
 from rsl_turn_sequencing.event_sink import EventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor
@@ -34,31 +38,42 @@ def step_tick(
         event_sink.start_tick()
         event_sink.emit(EventType.TICK_START)
 
-    # 1) simultaneous fill
-    for a in actors:
-        eff_speed = (
+    # 0) extra turn handling (no fill)
+    # If any actor has pending extra turns, grant the turn immediately.
+    extra_candidates = [(i, a) for i, a in enumerate(actors) if int(a.extra_turns) > 0]
+    if extra_candidates:
+        i_best, best = extra_candidates[0]
+        best.extra_turns = int(best.extra_turns) - 1
+    else:
+        best = None
+        i_best = -1
+
+    # 1) simultaneous fill (only if no extra turn was granted)
+    if best is None:
+        for a in actors:
+            eff_speed = (
                 float(a.speed)
                 * float(a.speed_multiplier)
                 * float(speed_multiplier_from_effects(a.effects))
+            )
+            a.turn_meter += eff_speed
+
+        if event_sink is not None:
+            event_sink.emit(EventType.FILL_COMPLETE)
+
+        # 2) find all ready actors
+        ready = [a for a in actors if a.turn_meter + EPS >= TM_GATE]
+        if not ready:
+            return None
+
+        # 3) choose actor: highest TM, then speed, then list order
+        # Use index to make final tie-break stable
+        indexed = list(enumerate(actors))
+        ready_indexed = [(i, a) for (i, a) in indexed if a.turn_meter + EPS >= TM_GATE]
+        i_best, best = max(
+            ready_indexed,
+            key=lambda t: (t[1].turn_meter, t[1].speed, -t[0]),
         )
-        a.turn_meter += eff_speed
-
-    if event_sink is not None:
-        event_sink.emit(EventType.FILL_COMPLETE)
-
-    # 2) find all ready actors
-    ready = [a for a in actors if a.turn_meter + EPS >= TM_GATE]
-    if not ready:
-        return None
-
-    # 3) choose actor: highest TM, then speed, then list order
-    # Use index to make final tie-break stable
-    indexed = list(enumerate(actors))
-    ready_indexed = [(i, a) for (i, a) in indexed if a.turn_meter + EPS >= TM_GATE]
-    i_best, best = max(
-        ready_indexed,
-        key=lambda t: (t[1].turn_meter, t[1].speed, -t[0]),
-    )
 
     if event_sink is not None:
         event_sink.emit(
@@ -75,11 +90,26 @@ def step_tick(
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
         event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
 
+    # TURN_START-triggered effects (A2): apply poison damage now.
+    poison_dmg = poison_damage_from_effects(best.effects)
+    if poison_dmg > 0 and float(best.max_hp) > 0:
+        best.hp = max(0.0, float(best.hp) - float(poison_dmg))
+        if event_sink is not None:
+            event_sink.emit(
+                EventType.EFFECT_TRIGGERED,
+                actor=best.name,
+                actor_index=i_best,
+                effect="POISON",
+                amount=float(poison_dmg),
+                phase=EventType.TURN_START,
+            )
+
+    if event_sink is not None:
         # Optional snapshot capture at TURN_END (observer-only)
         if (
-                snapshot_capture is not None
-                and event_sink.current_tick in snapshot_capture
-                and hasattr(event_sink, "capture_snapshot")
+            snapshot_capture is not None
+            and event_sink.current_tick in snapshot_capture
+            and hasattr(event_sink, "capture_snapshot")
         ):
             event_sink.capture_snapshot(
                 turn=event_sink.current_tick,
