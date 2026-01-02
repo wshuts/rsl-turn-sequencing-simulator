@@ -1,0 +1,65 @@
+[
+  {
+    "tick": 1,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 1,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "winner": "Mikage"
+    }
+  },
+  {
+    "tick": 1,
+    "seq": 3,
+    "type": "TURN_START",
+    "actor": "Mikage",
+    "data": {
+      "boss_shield_value": 21,
+      "boss_shield_status": "UP"
+    }
+  },
+  {
+    "tick": 1,
+    "seq": 4,
+    "type": "TURN_END",
+    "actor": "Mikage",
+    "data": {
+      "boss_shield_value": 20,
+      "boss_shield_status": "UP"
+    }
+  },
+  {
+    "tick": 2,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 2,
+    "seq": 2,
+    "type": "TURN_START",
+    "actor": "Boss",
+    "data": {
+      "boss_shield_value": 20,
+      "boss_shield_status": "UP"
+    }
+  },
+  {
+    "tick": 2,
+    "seq": 3,
+    "type": "TURN_END",
+    "actor": "Boss",
+    "data": {
+      "boss_shield_value": 21,
+      "boss_shield_status": "UP"
+    }
+  }
+]

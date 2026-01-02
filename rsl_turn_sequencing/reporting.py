@@ -74,9 +74,9 @@ def derive_turn_rows(events: Iterable[Event]) -> list[TurnRow]:
 
 
 def group_rows_into_boss_frames(
-    rows: Iterable[TurnRow],
-    *,
-    boss_actor: str,
+        rows: Iterable[TurnRow],
+        *,
+        boss_actor: str,
 ) -> list[BossTurnFrame]:
     frames: list[BossTurnFrame] = []
     current: list[TurnRow] = []

@@ -65,9 +65,9 @@ def step_tick(
     if best is None:
         for a in actors:
             eff_speed = (
-                float(a.speed)
-                * float(a.speed_multiplier)
-                * float(speed_multiplier_from_effects(a.effects))
+                    float(a.speed)
+                    * float(a.speed_multiplier)
+                    * float(speed_multiplier_from_effects(a.effects))
             )
             a.turn_meter += eff_speed
 
@@ -152,9 +152,9 @@ def step_tick(
     if event_sink is not None:
         # Optional snapshot capture at TURN_END (observer-only)
         if (
-            snapshot_capture is not None
-            and event_sink.current_tick in snapshot_capture
-            and hasattr(event_sink, "capture_snapshot")
+                snapshot_capture is not None
+                and event_sink.current_tick in snapshot_capture
+                and hasattr(event_sink, "capture_snapshot")
         ):
             event_sink.capture_snapshot(
                 turn=event_sink.current_tick,

@@ -1,7 +1,8 @@
 # RSL Turn Sequencing Simulator (v0)
 
 This repo contains a deterministic **turn-sequencing simulator** plus a **CLI harness**.
-The purpose is to make *timing* and *ordering* observable (turn boundaries, trigger boundaries, and boss-relative groupings)
+The purpose is to make *timing* and *ordering* observable (turn boundaries, trigger boundaries, and boss-relative
+groupings)
 so we can validate mechanics with tests and reason about Raid: Shadow Legends–style sequencing problems.
 
 ## What this tool does
@@ -13,9 +14,29 @@ so we can validate mechanics with tests and reason about Raid: Shadow Legends–
 - Groups Turn Rows into **Boss Turn Frames**, where a frame ends when the boss completes a turn.
 - Prints a human-readable text report from the derived Boss Turn Frames.
 
+## What you can feed it (Epic D2 input contract)
+
+The CLI can load an **authoritative ordered event stream** from JSON:
+
+- File format: JSON array of event objects
+- Each event must contain:
+    - `tick` (int >= 1)
+    - `seq` (int >= 1)
+    - `type` (string; must match `EventType`)
+    - `actor` (string or null)
+    - `data` (object)
+- Ordering is validated at load time:
+    - events must be strictly increasing by `(tick, seq)`
+
+A sample input is included:
+
+```bash
+python -m rsl_turn_sequencing run --input samples/demo_event_stream.json
+```
+
 ## What this tool does NOT do (yet)
 
-- No structured input files (Epic D2 will introduce a formal input contract).
+- No scenario definition language (the input is an event stream, not “champion builds”).
 - No installable console script (use `python -m ...` for now).
 - No UI or visualization.
 - No damage modeling, AI, or strategy recommendations.
@@ -60,8 +81,8 @@ Where:
 - **PRE** is the boss-shield snapshot captured at that actor's `TURN_START`.
 - **POST** is the boss-shield snapshot captured at that actor's `TURN_END`.
 - A snapshot renders as: `<value> <status>`
-  - `value` is the boss shield integer at that moment.
-  - `status` is currently `UP` or `BROKEN`.
+    - `value` is the boss shield integer at that moment.
+    - `status` is currently `UP` or `BROKEN`.
 - `--` means "no shield snapshot was present on that event".
 
 A small example from the v0 demo:

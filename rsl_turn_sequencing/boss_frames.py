@@ -19,9 +19,9 @@ class BossTurnFrame:
 
 
 def group_events_into_boss_frames(
-    events: Sequence[Event] | Iterable[Event],
-    *,
-    boss_actor: str,
+        events: Sequence[Event] | Iterable[Event],
+        *,
+        boss_actor: str,
 ) -> list[BossTurnFrame]:
     """
     Group an ordered event stream into boss-relative frames.

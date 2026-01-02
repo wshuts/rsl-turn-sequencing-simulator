@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from rsl_turn_sequencing.engine import step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.reporting import derive_turn_rows, group_rows_into_boss_frames
+from rsl_turn_sequencing.stream_io import InputFormatError, load_event_stream
 
 
 def _demo_actors() -> list[Actor]:
@@ -32,8 +34,8 @@ def _fmt_shield(snap: object | None) -> str:
     return f"{int(value)} {str(status)}"
 
 
-def _render_text_report(*, boss_actor: str, sink: InMemoryEventSink) -> str:
-    rows = derive_turn_rows(sink.events)
+def _render_text_report(*, boss_actor: str, events) -> str:
+    rows = derive_turn_rows(events)
     frames = group_rows_into_boss_frames(rows, boss_actor=boss_actor)
 
     out: list[str] = []
@@ -52,15 +54,18 @@ def _render_text_report(*, boss_actor: str, sink: InMemoryEventSink) -> str:
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
-    if not args.demo:
-        # Epic D2 will introduce a structured input contract.
-        print(
-            "ERROR: v0 only supports --demo.\n"
-            "\n"
-            "Next planned step (Epic D2): load an ordered structured event stream from --input.",
-            file=sys.stderr,
-        )
+    if bool(args.demo) == bool(args.input):
+        print("ERROR: choose exactly one of --demo or --input.", file=sys.stderr)
         return 2
+
+    if args.input:
+        try:
+            events = load_event_stream(Path(str(args.input)))
+        except InputFormatError as e:
+            print(f"ERROR: invalid input stream: {e}", file=sys.stderr)
+            return 2
+        sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=events))
+        return 0
 
     actors = _demo_actors()
     sink = InMemoryEventSink()
@@ -68,7 +73,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     for _ in range(int(args.ticks)):
         step_tick(actors, event_sink=sink)
 
-    sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), sink=sink))
+    sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=sink.events))
     return 0
 
 
@@ -93,6 +98,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--demo",
         action="store_true",
         help="Run the built-in deterministic demo roster (v0).",
+    )
+    run.add_argument(
+        "--input",
+        type=str,
+        default=None,
+        help=(
+            "Path to a JSON file containing an ordered structured event stream (Epic D2). "
+            "Example: samples/demo_event_stream.json"
+        ),
     )
     run.add_argument(
         "--ticks",
