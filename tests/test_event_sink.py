@@ -50,3 +50,29 @@ def test_event_order_on_first_action_tick():
     fill_evt = tick5[1]
     assert "meters" in fill_evt.data
     assert len(fill_evt.data["meters"]) == len(actors)
+
+
+def test_event_stream_is_deterministic_over_n_ticks():
+    actors1 = make_actors()
+    sink1 = InMemoryEventSink()
+    for _ in range(25):
+        step_tick(actors1, event_sink=sink1)
+
+    actors2 = make_actors()
+    sink2 = InMemoryEventSink()
+    for _ in range(25):
+        step_tick(actors2, event_sink=sink2)
+
+    assert sink1.events == sink2.events
+
+
+def test_step_tick_emits_no_stdout_or_stderr(capsys):
+    actors = make_actors()
+    sink = InMemoryEventSink()
+
+    for _ in range(10):
+        step_tick(actors, event_sink=sink)
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
