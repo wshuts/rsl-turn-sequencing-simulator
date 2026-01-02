@@ -73,14 +73,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="rsl_turn_sequencing",
         description=(
             "RSL Turn Sequencing Simulator — user harness (Epic D).\n"
             "\n"
             "This CLI is observer-only: it does not change engine rules.\n"
             "It runs a deterministic simulation and prints Boss Turn Frames."
-        ),
+        )
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
