@@ -1,0 +1,3 @@
+﻿Boss Turn #1
+  [21 UP     ] Mikage [20 UP]
+  [20 UP     ] Boss [21 UP]
