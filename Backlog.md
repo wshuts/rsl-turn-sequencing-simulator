@@ -91,7 +91,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 ## EPIC C — Boss-Centric Reporting & Shield Observability
 
 ### C1. Boss-relative Frame Grouping  **← ACTIVE NEXT STEP**
-- [ ] Implement reporting layer that groups events into
+- [x] Implement reporting layer that groups events into
   **Boss Turn Frames**
 - [ ] Frames labeled relative to boss actions:
   - “Boss Turn #N”
@@ -104,7 +104,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 ---
 
 ### C2. Shield Start-of-Turn / End-of-Turn State in Trace
-- [ ] Engine-level representation of shield state
+- [x] Engine-level representation of shield state
 - [ ] Trace expresses transitions:
   - Shield: UP → BROKEN (or equivalent)
 - [ ] Shield state captured at:
@@ -119,7 +119,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 ---
 
 ### C3. Boss Turn Frames with PRE/POST Shield Indicators
-- [ ] Derive Turn Rows from trace events:
+- [x] Derive Turn Rows from trace events:
   - TURN_START → TURN_END
 - [ ] Capture boss shield value:
   - PRE  = at row start
@@ -134,6 +134,12 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 - Matches demonstrated UI mental model
 - Shield changes are visible before and after every action
 - Reporting layer only (engine already correct)
+
+**Status:** ✅ COMPLETE
+
+---
+
+**ACTIVE NEXT STEP:** _None — Epic C complete_
 
 ---
 
