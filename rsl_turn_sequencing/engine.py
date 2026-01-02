@@ -13,6 +13,19 @@ TM_GATE = 1430.0
 EPS = 1e-9
 
 
+def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
+    """Observer-only: derive current boss shield state from the actor list."""
+    boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
+    if boss is None:
+        boss = next((a for a in actors if a.name == "Boss"), None)
+    if boss is None:
+        return None
+
+    value = int(getattr(boss, "shield", 0))
+    status = "UP" if value > 0 else "BROKEN"
+    return {"value": value, "status": status}
+
+
 def step_tick(
         actors: list[Actor],
         event_sink: EventSink | None = None,
@@ -97,7 +110,18 @@ def step_tick(
 
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
-        event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
+
+        boss_shield = _boss_shield_snapshot(actors)
+        if boss_shield is None:
+            event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
+        else:
+            event_sink.emit(
+                EventType.TURN_START,
+                actor=best.name,
+                actor_index=i_best,
+                boss_shield_value=boss_shield["value"],
+                boss_shield_status=boss_shield["status"],
+            )
 
     # TURN_START-triggered effects (A2): Poison triggers and decrements at TURN_START.
     remaining_start, expired_start, poison_dmg = apply_turn_start_effects(best.effects)
@@ -149,7 +173,17 @@ def step_tick(
                 },
             )
 
-        event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
+        boss_shield = _boss_shield_snapshot(actors)
+        if boss_shield is None:
+            event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
+        else:
+            event_sink.emit(
+                EventType.TURN_END,
+                actor=best.name,
+                actor_index=i_best,
+                boss_shield_value=boss_shield["value"],
+                boss_shield_status=boss_shield["status"],
+            )
 
     # Effect semantics (observer-faithful):
     # - Duration decrements at TURN_END of the affected actor (including extra turns later).

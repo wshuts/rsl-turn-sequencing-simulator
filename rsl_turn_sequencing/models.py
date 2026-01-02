@@ -8,6 +8,13 @@ class Actor:
     name: str
     # Speed and turn meter are modeled as floating point values.
     speed: float
+
+    # Optional boss shield model (observer-only until combat is implemented).
+    # Convention:
+    #   - shield > 0  => "UP"
+    #   - shield == 0 => "BROKEN"
+    shield: int = 0
+    is_boss: bool = False
     # Optional health model (only used when tests require it, e.g., Poison).
     max_hp: float = 0.0
     hp: float = 0.0
