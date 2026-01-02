@@ -1,0 +1,519 @@
+﻿Boss Turn #1
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #2
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #3
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #4
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #5
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #6
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #7
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #8
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #9
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #10
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #11
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #12
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #13
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #14
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #15
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #16
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #17
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #18
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #19
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #20
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #21
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #22
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #23
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #24
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #25
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #26
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #27
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #28
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #29
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #30
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #31
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #32
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #33
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #34
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #35
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #36
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #37
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #38
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #39
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #40
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #41
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #42
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #43
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #44
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #45
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #46
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #47
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #48
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #49
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #50
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #51
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #52
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #53
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #54
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #55
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #56
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #57
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #58
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #59
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #60
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #61
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #62
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
+
+Boss Turn #63
+  [0 BROKEN  ] Mithrala [0 BROKEN]
+  [0 BROKEN  ] Tomblord [0 BROKEN]
+  [0 BROKEN  ] Coldheart [0 BROKEN]
+  [0 BROKEN  ] Mikage [0 BROKEN]
+  [0 BROKEN  ] Martyr [0 BROKEN]
+  [0 BROKEN  ] Boss [0 BROKEN]
