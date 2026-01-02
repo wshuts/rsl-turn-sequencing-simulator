@@ -59,9 +59,9 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
 
-## EPIC B — Formal Event / Trace Model (Observability Backbone)
+## EPIC B — Formal Event / Trace Model (Observability Backbone) ✅ COMPLETE
 
-### B1. Define and Emit Structured Events  **← ACTIVE NEXT STEP**
+### B1. Define and Emit Structured Events
 - [ ] Replace ad-hoc prints with structured event objects
 - [ ] Event types include (minimum):
   - TICK_ADVANCE
@@ -84,13 +84,13 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 - Simulator output can be fully reconstructed from events
 - Tests validate behavior without relying on visuals or logs
 
-**Status:** ▶️ ACTIVE NEXT STEP
+**Status:** ✅ DONE
 
 ---
 
 ## EPIC C — Boss-Centric Reporting & Shield Observability
 
-### C1. Boss-relative Frame Grouping
+### C1. Boss-relative Frame Grouping  **← ACTIVE NEXT STEP**
 - [ ] Implement reporting layer that groups events into
   **Boss Turn Frames**
 - [ ] Frames labeled relative to boss actions:
