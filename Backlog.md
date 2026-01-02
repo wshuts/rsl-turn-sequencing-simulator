@@ -1,6 +1,7 @@
 # RSL Turn Sequencing Simulator — Backlog
 
 This backlog tracks **engine correctness first**, followed by **observability**, then **player-aligned reporting**.
+All reporting is strictly observational and derived from the ordered event stream.
 Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
@@ -88,7 +89,7 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
 
-## EPIC C — Boss-Centric Reporting & Shield Observability
+## EPIC C — Boss-Centric Reporting & Shield Observability ✅ COMPLETE
 
 ### C1. Boss-relative Frame Grouping  **← ACTIVE NEXT STEP**
 - [x] Implement reporting layer that groups events into
@@ -140,6 +141,67 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 ---
 
 **ACTIVE NEXT STEP:** _None — Epic C complete_
+
+---
+
+## EPIC D — User Harness & CLI (Executable Module)  **← ACTIVE NEXT STEP**
+
+> Epic D establishes a **clear, user-facing entrypoint** so the system can be
+> evaluated through real usage. This EPIC introduces **no new engine logic**
+> and does not modify event semantics or reporting rules.
+
+### D1. Executable Module with Clear Command-Line Interface  **← ACTIVE NEXT STEP**
+- [ ] Provide a canonical executable entrypoint:
+  - `python -m rsl_turn_sequencing ...`
+  - or an installed console command via project metadata
+- [ ] CLI must clearly document:
+  - expected input
+  - generated output
+  - supported options
+- [ ] Avoid a proliferation of ad-hoc scripts as the primary interface
+
+**Acceptance Criteria**
+- A fresh clone can be run via a single obvious command
+- `--help` explains purpose and usage without reading source code
+- CLI execution does not depend on tests or debug harnesses
+
+---
+
+### D2. Input Contract — Structured Event Stream (v0)
+- [ ] Define and document the accepted input format
+  - ordered structured event stream (authoritative)
+- [ ] Provide at least one sample input suitable for user evaluation
+- [ ] Validate required fields and ordering at load time
+
+**Acceptance Criteria**
+- User can answer “What do I feed it?” unambiguously
+- Input is treated as the single source of truth
+
+---
+
+### D3. Text-Based Report Output (Boss Turn Frames v0)
+- [ ] Render Boss Turn Frames as the primary reporting unit
+- [ ] Render Turn Rows:
+  - exactly one per actor turn
+  - `TURN_START → TURN_END`
+- [ ] Include boss shield snapshots:
+  - PRE at `TURN_START`
+  - POST at `TURN_END`
+
+**Acceptance Criteria**
+- User can read the output and reconstruct what happened
+- Shield state never requires inference from damage numbers
+
+---
+
+### D4. README — User Onboarding (v0)
+- [ ] Describe what the tool does and does not do
+- [ ] Provide Quick Start instructions for the CLI
+- [ ] Explain how to interpret the output at a high level
+
+**Acceptance Criteria**
+- A new user can run the tool in under two minutes
+- First friction points are about report usefulness, not setup
 
 ---
 
