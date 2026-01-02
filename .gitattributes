@@ -1,1 +1,11 @@
-* text=auto eol=lf
+# Enforce consistent line endings to keep patches stable across platforms and IDEs.
+* text=auto
+
+*.py   text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.txt  text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.zip  binary

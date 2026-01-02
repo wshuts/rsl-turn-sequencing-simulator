@@ -230,6 +230,15 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
 
+## WORKFLOW — Patch Protocol (Non-blocking)
+
+- Fresh ZIP uploads are the canonical baseline when collaborating via patches.
+- Normalize line endings via `.gitattributes` to prevent CRLF/LF-driven hunk mismatch.
+- Keep patches **single-purpose** (one intent per patch).
+- Reject **no-op diffs** (lines where `-` and `+` are identical) because they create fragile hunks and can lead to partial application / dropped lines.
+
+---
+
 ## Sequencing Rules
 
 1. EPIC B unblocks EPIC C
