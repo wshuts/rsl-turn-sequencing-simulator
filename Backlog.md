@@ -150,20 +150,23 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 > evaluated through real usage. This EPIC introduces **no new engine logic**
 > and does not modify event semantics or reporting rules.
 
-### D1. Executable Module with Clear Command-Line Interface  **← ACTIVE NEXT STEP**
-- [ ] Provide a canonical executable entrypoint:
+### D1. Executable Module with Clear Command-Line Interface
+- [x] Provide a canonical executable entrypoint:
   - `python -m rsl_turn_sequencing ...`
-  - or an installed console command via project metadata
+  - *(optional later)* installed console command via project metadata
+- [x] CLI provides discoverability via `--help` and a runnable v0 demo mode
 - [ ] CLI must clearly document:
-  - expected input
+  - expected input *(v0 demo only; D2 will formalize the input contract)*
   - generated output
   - supported options
-- [ ] Avoid a proliferation of ad-hoc scripts as the primary interface
+- [x] Avoid a proliferation of ad-hoc scripts as the primary interface
 
 **Acceptance Criteria**
 - A fresh clone can be run via a single obvious command
 - `--help` explains purpose and usage without reading source code
 - CLI execution does not depend on tests or debug harnesses
+
+**Status:** ✅ DONE (v0 demo harness)
 
 ---
 
@@ -180,11 +183,11 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 ---
 
 ### D3. Text-Based Report Output (Boss Turn Frames v0)
-- [ ] Render Boss Turn Frames as the primary reporting unit
-- [ ] Render Turn Rows:
+- [x] Render Boss Turn Frames as the primary reporting unit
+- [x] Render Turn Rows:
   - exactly one per actor turn
   - `TURN_START → TURN_END`
-- [ ] Include boss shield snapshots:
+- [x] Include boss shield snapshots:
   - PRE at `TURN_START`
   - POST at `TURN_END`
 
@@ -192,9 +195,11 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 - User can read the output and reconstruct what happened
 - Shield state never requires inference from damage numbers
 
+**Status:** ✅ DONE (v0 text report)
+
 ---
 
-### D4. README — User Onboarding (v0)
+### D4. README — User Onboarding (v0)  **← ACTIVE NEXT STEP**
 - [ ] Describe what the tool does and does not do
 - [ ] Provide Quick Start instructions for the CLI
 - [ ] Explain how to interpret the output at a high level
