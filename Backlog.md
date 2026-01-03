@@ -14,8 +14,8 @@ Completed work is intentionally removed; Git history is the record.
 
 ## ACTIVE NEXT STEP (ONE ONLY)
 
-**D2 — Minimal User Input Schema (JIT input, v0)**  
-Define the smallest user-provided input required to drive the simulator today, with optional support for Mythical champions.
+**C1 — Boss Shield State Tracking (v0)**  
+Track and report the boss’s shield count and open/closed state at well-defined turn boundaries.
 
 ---
 
@@ -40,7 +40,25 @@ Define the smallest user-provided input required to drive the simulator today, w
 
 > Human-readable views derived strictly from the event stream.
 
-(No active items)
+### C1 — Boss Shield State Tracking (v0) ← ACTIVE
+
+**Goal**  
+Make the boss’s shield state observable and trustworthy.
+
+**Scope (v0)**
+- Track boss shield:
+  - numeric value
+  - open vs closed state
+- Capture shield state:
+  - at TURN_START (pre)
+  - at TURN_END (post)
+- Associate shield snapshots with each actor’s turn
+- Ensure behavior matches in-game sequencing
+
+**Constraints**
+- Derived strictly from the event stream
+- No damage formulas beyond shield increment/decrement
+- No debuff, ACC/RES, or AI logic
 
 ---
 
@@ -59,6 +77,7 @@ Define the smallest user-provided input required to drive the simulator today, w
 ---
 
 ### D2 — Minimal User Input Schema (JIT Input) ← ACTIVE
+### D2 — Minimal User Input Schema (JIT Input) ← COMPLETE
 
 **Goal**  
 Allow a user to describe a battle with minimal friction and still obtain meaningful sequencing output.
