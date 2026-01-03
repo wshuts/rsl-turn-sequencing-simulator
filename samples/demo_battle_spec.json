@@ -1,0 +1,13 @@
+{
+  "boss": {
+    "name": "Boss",
+    "speed": 250
+  },
+  "actors": [
+    {"name": "Mikage", "speed": 340},
+    {"name": "Mithrala", "speed": 282},
+    {"name": "Tomblord", "speed": 270},
+    {"name": "Coldheart", "speed": 265},
+    {"name": "Martyr", "speed": 252}
+  ]
+}

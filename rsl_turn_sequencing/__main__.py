@@ -8,7 +8,11 @@ from rsl_turn_sequencing.engine import step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.reporting import derive_turn_rows, group_rows_into_boss_frames
-from rsl_turn_sequencing.stream_io import InputFormatError, load_event_stream
+from rsl_turn_sequencing.stream_io import (
+    InputFormatError,
+    load_battle_spec,
+    load_event_stream,
+)
 
 
 def _demo_actors() -> list[Actor]:
@@ -19,8 +23,25 @@ def _demo_actors() -> list[Actor]:
         Actor("Tomblord", 270.0),
         Actor("Coldheart", 265.0),
         Actor("Martyr", 252.0),
-        Actor("Boss", 250.0),
+        Actor("Boss", 250.0, is_boss=True),
     ]
+
+def _actors_from_battle_spec(path: Path) -> list[Actor]:
+    spec = load_battle_spec(path)
+
+    actors: list[Actor] = []
+    for a in spec.actors:
+        speed = float(a.speed)
+        # v0: if a form is provided, allow a speed override via speed_by_form.
+        if a.form_start and a.speed_by_form and a.form_start in a.speed_by_form:
+            speed = float(a.speed_by_form[a.form_start])
+        actors.append(Actor(a.name, speed))
+
+    boss_speed = float(spec.boss.speed)
+    if spec.boss.form_start and spec.boss.speed_by_form and spec.boss.form_start in spec.boss.speed_by_form:
+        boss_speed = float(spec.boss.speed_by_form[spec.boss.form_start])
+    actors.append(Actor(spec.boss.name, boss_speed, is_boss=True))
+    return actors
 
 
 def _fmt_shield(snap: object | None) -> str:
@@ -54,8 +75,9 @@ def _render_text_report(*, boss_actor: str, events) -> str:
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
-    if bool(args.demo) == bool(args.input):
-        print("ERROR: choose exactly one of --demo or --input.", file=sys.stderr)
+    chosen = sum(1 for v in [bool(args.demo), bool(args.battle), bool(args.input)] if v)
+    if chosen != 1:
+        print("ERROR: choose exactly one of --demo, --battle, or --input.", file=sys.stderr)
         return 2
 
     if args.input:
@@ -67,7 +89,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
         sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=events))
         return 0
 
-    actors = _demo_actors()
+    if args.battle:
+        try:
+            actors = _actors_from_battle_spec(Path(str(args.battle)))
+        except InputFormatError as e:
+            print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
+            return 2
+    else:
+        actors = _demo_actors()
     sink = InMemoryEventSink()
 
     for _ in range(int(args.ticks)):
@@ -98,6 +127,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--demo",
         action="store_true",
         help="Run the built-in deterministic demo roster (v0).",
+    )
+    run.add_argument(
+        "--battle",
+        type=str,
+        default=None,
+        help=(
+            "Path to a JSON file containing a minimal battle spec (JIT input v0). "
+            "Example: samples/demo_battle_spec.json"
+        ),
     )
     run.add_argument(
         "--input",

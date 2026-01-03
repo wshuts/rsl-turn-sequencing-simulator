@@ -14,7 +14,16 @@ so we can validate mechanics with tests and reason about Raid: Shadow Legends–
 - Groups Turn Rows into **Boss Turn Frames**, where a frame ends when the boss completes a turn.
 - Prints a human-readable text report from the derived Boss Turn Frames.
 
-## What you can feed it (Epic D2 input contract)
+## What you can feed it (Epic D2 + JIT input v0)
+
+Option A (recommended for early user evaluation): a **minimal battle spec** JSON
+that declares boss + actor speeds.
+
+```bash
+python -m rsl_turn_sequencing run --battle samples/demo_battle_spec.json --ticks 400
+```
+
+Option B: an authoritative **ordered event stream** (still supported).
 
 The CLI can load an **authoritative ordered event stream** from JSON:
 
@@ -28,7 +37,7 @@ The CLI can load an **authoritative ordered event stream** from JSON:
 - Ordering is validated at load time:
     - events must be strictly increasing by `(tick, seq)`
 
-A sample input is included:
+A sample event stream input is included:
 
 ```bash
 python -m rsl_turn_sequencing run --input samples/demo_event_stream.json
@@ -36,7 +45,7 @@ python -m rsl_turn_sequencing run --input samples/demo_event_stream.json
 
 ## What this tool does NOT do (yet)
 
-- No scenario definition language (the input is an event stream, not “champion builds”).
+- No full scenario/build definition language (JIT input v0 only covers speeds).
 - No installable console script (use `python -m ...` for now).
 - No UI or visualization.
 - No damage modeling, AI, or strategy recommendations.
