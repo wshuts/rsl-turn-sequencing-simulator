@@ -248,6 +248,59 @@ Only one item should ever be marked **ACTIVE NEXT STEP** at a time.
 
 ---
 
+## Checkpoint — JIT User Input & Mythical Metamorph Modeling
+
+This checkpoint captures **input-contract and modeling decisions** discovered
+while evaluating real user tools (HellHades, DeadwoodJedi) against the simulator’s
+current engine capabilities.
+
+### DECISIONS LOCKED
+
+- **Minimum viable user input (current stage)**:
+  - Boss: **name + speed**
+  - Team: **one actor per champion + speed**
+- **Speed-only input** is sufficient to generate meaningful turn-sequencing output.
+- **Mythical champions** are modeled as **a single actor with multiple forms**,
+  not as duplicated actors.
+- **Metamorph is an active skill**, not a passive toggle:
+  - Selected on the actor’s turn
+  - Consumes the turn like any other active skill
+  - Governed by cooldown measured in **actor turns**
+- **Cooldowns decrement at TURN_END** of the actor’s turns.
+- **Form changes (including speed swaps)** take effect starting the
+  **next tick after the turn**, consistent with existing boundary semantics.
+- External tools may represent mythicals as multiple entries for UX convenience,
+  but the engine model remains **one actor + form state**.
+
+### ACTIVE NEXT STEP (ONE ONLY)
+
+- **Formalize the minimal user input schema**:
+  - Boss: `name`, `speed`
+  - Actor: `name`, `speed`
+  - Optional extension for form-capable actors:
+    - `form_start`
+    - `speed_by_form`
+    - `metamorph` as an active skill entry with `cooldown_turns`
+
+### PARKING LOT (NOT ACTIVE)
+
+- Full active-skill selection engine (priority resolution / rotation logic)
+- Skill delays at battle start
+- Separate cooldown tables per form
+- Cooldown reset vs persistence rules across form swap
+- UI duplication of forms (DeadwoodJedi-style convenience)
+- Damage, debuff, shield, ACC/RES modeling
+- Interactive or conditional skill choice
+
+### OPEN QUESTIONS (OPTIONAL)
+
+- When metamorph is used, do **non-metamorph cooldowns persist unchanged**?
+- Do form-specific skills share cooldown lineage or behave independently?
+- Are there real RSL cases that require **immediate speed-change semantics**
+  instead of “next tick” application?
+
+---
+
 ## Parking Lot (Not Active)
 
 - Skill pinning by Boss Frame
