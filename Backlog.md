@@ -24,7 +24,41 @@ Track and report the boss’s shield count and open/closed state at well-defined
 > Core timing and sequencing rules of the engine.  
 > This area is considered **stable** unless new mechanics require extension.
 
-(No active items)
+### A1 — Form-Capable / Mythical Champion Semantics
+
+This section records modeling decisions for champions with multiple forms
+(e.g. Mythical champions using Metamorph).
+
+**Conceptual model**
+- A Mythical champion is represented as a **single actor**
+- The actor may have multiple **forms**
+- Form changes do **not** create a new actor
+
+**Form-capable input (JIT schema fields)**
+- `form_start`
+- `speed_by_form` (e.g. `{ alt: 280, base: 255 }`)
+- `metamorph` modeled as an **active skill** with:
+  - `cooldown_turns`
+
+**Metamorph as an active skill**
+- Metamorph is a selectable **active skill**
+- Using Metamorph:
+  - is chosen on the actor’s turn
+  - consumes the turn
+  - immediately switches the actor’s form
+  - may grant an extra turn
+
+**Cooldown semantics**
+- Cooldown is set to its **maximum value immediately on use**
+- Cooldown decrements at **TURN_START** of the actor’s subsequent turns
+- Skill availability is evaluated:
+  - after TURN_START decrement
+  - before action selection
+
+**Turn and speed effects**
+- Form changes take effect immediately during the turn Metamorph is used
+- Any granted extra turn uses the new form and skill set
+- Any speed changes affect **subsequent turn-meter fill**, not retroactively
 
 ---
 
