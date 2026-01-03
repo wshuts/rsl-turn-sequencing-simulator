@@ -83,7 +83,10 @@ Allow a user to describe a battle with minimal friction and still obtain meaning
   - chosen on the actor’s turn
   - consumes the turn
   - cooldown measured in **actor turns**
-- Cooldowns decrement at **TURN_END**
+- Cooldown semantics:
+  - Cooldown is set to its **maximum value immediately when a skill is used**
+  - Cooldowns **decrement at TURN_START** of the actor’s subsequent turns
+  - Skill availability is evaluated **after TURN_START decrement and before action selection**
 - Form and speed changes take effect **starting the next tick**
 
 ---
