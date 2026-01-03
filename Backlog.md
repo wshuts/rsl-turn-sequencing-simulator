@@ -87,7 +87,9 @@ Allow a user to describe a battle with minimal friction and still obtain meaning
   - Cooldown is set to its **maximum value immediately when a skill is used**
   - Cooldowns **decrement at TURN_START** of the actor’s subsequent turns
   - Skill availability is evaluated **after TURN_START decrement and before action selection**
-- Form and speed changes take effect **starting the next tick**
+- Form changes take effect immediately during the turn in which Metamorph is used.
+- Any granted extra turn uses the new form and skill set.
+- Any speed changes will affect subsequent turn-meter fill.
 
 ---
 
