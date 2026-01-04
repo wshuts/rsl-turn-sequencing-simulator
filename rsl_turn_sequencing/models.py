@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from rsl_turn_sequencing.effects import Effect
 
@@ -23,13 +24,22 @@ class Actor:
     is_boss: bool = False
     # Optional metadata for faction-gated behaviors (e.g., join attacks).
     faction: str | None = None
+
+    # Blessings live here (data-driven). Tests may use this for deterministic procs.
+    # Example:
+    #   {"phantom_touch": {"cooldown": 1, "rank": 4}}
+    blessings: dict[str, dict[str, Any]] = field(default_factory=dict)
+
     # Optional health model (only used when tests require it, e.g., Poison).
     max_hp: float = 0.0
     hp: float = 0.0
+
     # Multiplicative modifier applied to speed for tick fill (e.g., Decrease SPD).
     # 1.0 means no change; 0.7 means -30% speed.
     speed_multiplier: float = 1.0
+
     turn_meter: float = 0.0
     # Extra turns are turns granted without advancing turn meter fill.
     extra_turns: int = 0
+
     effects: list[Effect] = field(default_factory=list)
