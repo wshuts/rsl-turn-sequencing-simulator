@@ -11,6 +11,7 @@ from rsl_turn_sequencing.events import Event, EventType
 class InputFormatError(ValueError):
     """Raised when an input event stream fails validation."""
 
+
 @dataclass(frozen=True)
 class BattleSpecActor:
     name: str

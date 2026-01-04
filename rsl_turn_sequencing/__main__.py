@@ -26,6 +26,7 @@ def _demo_actors() -> list[Actor]:
         Actor("Boss", 250.0, is_boss=True),
     ]
 
+
 def _actors_from_battle_spec(path: Path) -> list[Actor]:
     spec = load_battle_spec(path)
 

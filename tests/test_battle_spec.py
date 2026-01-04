@@ -52,14 +52,16 @@ def test_load_battle_spec_happy_path(tmp_path: Path) -> None:
         ({"boss": {"name": "Boss", "speed": 250}, "actors": []}, "non-empty"),
         ({"boss": {"name": "Boss", "speed": 250}, "actors": ["A"]}, "actors[0]"),
         (
-            {
-                "boss": {"name": "Boss", "speed": 250},
-                "actors": [{"name": "A", "speed": 200, "speed_by_form": []}],
-            },
-            "speed_by_form",
+                {
+                    "boss": {"name": "Boss", "speed": 250},
+                    "actors": [{"name": "A", "speed": 200, "speed_by_form": []}],
+                },
+                "speed_by_form",
         ),
-        ({"boss": {"name": "Boss", "speed": 250, "faction": 123}, "actors": [{"name": "A", "speed": 200}]}, "boss.faction must be a non-empty string when provided"),
-        ({"boss": {"name": "Boss", "speed": 250}, "actors": [{"name": "A", "speed": 200, "faction": ""}]}, "actors[0].faction must be a non-empty string when provided"),
+        ({"boss": {"name": "Boss", "speed": 250, "faction": 123}, "actors": [{"name": "A", "speed": 200}]},
+         "boss.faction must be a non-empty string when provided"),
+        ({"boss": {"name": "Boss", "speed": 250}, "actors": [{"name": "A", "speed": 200, "faction": ""}]},
+         "actors[0].faction must be a non-empty string when provided"),
     ],
 )
 def test_load_battle_spec_rejects_bad_inputs(tmp_path: Path, payload: dict, msg: str) -> None:

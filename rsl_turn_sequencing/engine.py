@@ -111,17 +111,48 @@ def step_tick(
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
 
+        # Observability hook (C1): faction-gated join-attack evaluation.
+        # For now, we only expose Mikage A1 joiners based on Shadowkin faction.
+        # This does not execute attacks or apply damage; it's trace-only semantics.
+        join_attack_joiners: list[str] | None = None
+        if best.name == "Mikage":
+            join_attack_joiners = [
+                a.name
+                for a in actors
+                if (not a.is_boss)
+                   and (a is not best)
+                   and (getattr(a, "faction", None) == "Shadowkin")
+            ]
+
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
-            event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
+            if join_attack_joiners is None:
+                event_sink.emit(EventType.TURN_START, actor=best.name, actor_index=i_best)
+            else:
+                event_sink.emit(
+                    EventType.TURN_START,
+                    actor=best.name,
+                    actor_index=i_best,
+                    join_attack_joiners=join_attack_joiners,
+                )
         else:
-            event_sink.emit(
-                EventType.TURN_START,
-                actor=best.name,
-                actor_index=i_best,
-                boss_shield_value=boss_shield["value"],
-                boss_shield_status=boss_shield["status"],
-            )
+            if join_attack_joiners is None:
+                event_sink.emit(
+                    EventType.TURN_START,
+                    actor=best.name,
+                    actor_index=i_best,
+                    boss_shield_value=boss_shield["value"],
+                    boss_shield_status=boss_shield["status"],
+                )
+            else:
+                event_sink.emit(
+                    EventType.TURN_START,
+                    actor=best.name,
+                    actor_index=i_best,
+                    boss_shield_value=boss_shield["value"],
+                    boss_shield_status=boss_shield["status"],
+                    join_attack_joiners=join_attack_joiners,
+                )
 
     # TURN_START-triggered effects (A2): Poison triggers and decrements at TURN_START.
     remaining_start, expired_start, poison_dmg = apply_turn_start_effects(best.effects)
