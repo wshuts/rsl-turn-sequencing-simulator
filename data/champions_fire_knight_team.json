@@ -3,14 +3,22 @@
   "context": {
     "boss": "Fire Knight",
     "shield_model": "hit_counter",
-    "team_slot_order": ["mikage", "mithrala", "martyr", "tomb_lord", "coldheart"]
+    "team_slot_order": [
+      "mikage",
+      "mithrala",
+      "martyr",
+      "tomb_lord",
+      "coldheart"
+    ]
   },
   "champions": [
     {
       "id": "mikage",
       "name": "Lady Mikage",
       "faction": "Shadowkin",
-      "rarity_tags": ["Mythical"],
+      "rarity_tags": [
+        "Mythical"
+      ],
       "forms": {
         "base": {
           "name": "Base Form",
@@ -180,7 +188,9 @@
           "key": "A1",
           "name": "Libation of Pain",
           "hits": 2,
-          "notes": ["Attacks 2 times. Each hit can place 5% Poison for 2 turns."],
+          "notes": [
+            "Attacks 2 times. Each hit can place 5% Poison for 2 turns."
+          ],
           "hit_sources": [
             {
               "kind": "skill_hits",
@@ -237,7 +247,9 @@
           "key": "A1",
           "name": "Rush",
           "hits": 1,
-          "notes": ["Attacks 1 enemy (1 hit). Can place 60% Decrease DEF for 2 turns."],
+          "notes": [
+            "Attacks 1 enemy (1 hit). Can place 60% Decrease DEF for 2 turns."
+          ],
           "hit_sources": [
             {
               "kind": "skill_hits",
@@ -255,7 +267,9 @@
             "Places Counterattack on all allies for 2 turns.",
             "No attack component."
           ],
-          "grants_buffs": ["counterattack"]
+          "grants_buffs": [
+            "counterattack"
+          ]
         },
         "A3": {
           "key": "A3",
@@ -274,6 +288,27 @@
               "conditions": []
             }
           ]
+        }
+      },
+      "blessings": {
+        "faultless_defense": {
+          "name": "Faultless Defense",
+          "rank": 4,
+          "effect_text": "Whenever an enemy attacks an ally under an Increase DEF buff placed by this Champion, reflects a portion of the damage back to the attacker.",
+          "modeling": {
+            "damage_ignored_for_shield": true,
+            "trigger": {
+              "when": "ally_is_attacked",
+              "requires": [
+                "increase_def_buff_on_target",
+                "increase_def_was_placed_by_blessing_holder"
+              ]
+            },
+            "emits_hit_event": {
+              "count": 1,
+              "kind": "faultless_defense_reflect"
+            }
+          }
         }
       }
     },
