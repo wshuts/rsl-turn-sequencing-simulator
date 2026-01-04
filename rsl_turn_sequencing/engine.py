@@ -191,23 +191,27 @@ def step_tick(
 
     # Boss shield hit-counter semantics (C2):
     # Apply turn-caused hits before TURN_END snapshot.
-    # Supports:
-    #   - actor-driven hits (skills, blessings)
-    #   - non-actor hits (e.g., reflect), keyed under "REFLECT"
+    #
+    # This supports:
+    #   - Single-actor hit injection (e.g., Coldheart A1)
+    #   - Multi-source hit injection within one turn (e.g., Mikage A3 team-ups)
+    #   - Non-actor hits such as reflect, keyed under "REFLECT"
     if hit_counts_by_actor is not None:
         boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
         if boss is not None:
-            # Hits from the acting actor (if not boss)
-            if best is not boss:
-                hits = int(hit_counts_by_actor.get(best.name, 0))
-                if hits > 0:
-                    boss.shield = max(0, int(getattr(boss, "shield", 0)) - hits)
+            # Sum all "normal" hits injected for this turn (may involve multiple sources).
+            normal_hits = sum(
+                int(v)
+                for k, v in hit_counts_by_actor.items()
+                if k != "REFLECT"
+            )
+            if normal_hits > 0:
+                boss.shield = max(0, int(getattr(boss, "shield", 0)) - normal_hits)
 
-            # Hits not attributable to the acting actor (e.g., reflect)
+            # Reflect hits are allowed during boss turns (or any turn) and are modeled separately.
             reflect_hits = int(hit_counts_by_actor.get("REFLECT", 0))
             if reflect_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - reflect_hits)
-
 
     if event_sink is not None:
         # Optional snapshot capture at TURN_END (observer-only)
@@ -257,7 +261,6 @@ def step_tick(
                 effect=str(e.kind),
             )
     return best
-
 
 
 def step_tick_debug(actors: list[Actor]) -> tuple[Actor | None, list[float]]:

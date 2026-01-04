@@ -28,7 +28,6 @@ class BattleSpecActor:
     metamorph: dict[str, Any] | None = None
 
 
-
 @dataclass(frozen=True)
 class BattleSpec:
     boss: BattleSpecActor
@@ -132,7 +131,6 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
         speed_by_form=speed_by_form,
         metamorph=metamorph,
     )
-
 
 
 def load_event_stream(path: Path) -> list[Event]:
