@@ -15,6 +15,8 @@ class InputFormatError(ValueError):
 class BattleSpecActor:
     name: str
     speed: float
+    # Optional metadata for faction-gated behaviors (e.g., join attacks).
+    faction: str | None = None
     # Optional: starting form for Mythical/transform champions.
     form_start: str | None = None
     # Optional: speed overrides by form name.
@@ -85,6 +87,10 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
     if not isinstance(speed, (int, float)):
         raise InputFormatError(f"{label}.speed must be a number")
 
+    faction = raw.get("faction", None)
+    if faction is not None and (not isinstance(faction, str) or not faction.strip()):
+        raise InputFormatError(f"{label}.faction must be a non-empty string when provided")
+
     form_start = raw.get("form_start", None)
     if form_start is not None and (not isinstance(form_start, str) or not form_start.strip()):
         raise InputFormatError(f"{label}.form_start must be a non-empty string when provided")
@@ -109,6 +115,7 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
     return BattleSpecActor(
         name=str(name),
         speed=float(speed),
+        faction=str(faction) if faction is not None else None,
         form_start=str(form_start) if form_start is not None else None,
         speed_by_form=speed_by_form,
         metamorph=metamorph,

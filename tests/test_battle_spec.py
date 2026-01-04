@@ -13,12 +13,13 @@ def test_load_battle_spec_happy_path(tmp_path: Path) -> None:
     p.write_text(
         json.dumps(
             {
-                "boss": {"name": "Boss", "speed": 250},
+                "boss": {"name": "Boss", "speed": 250, "faction": "Demonspawn"},
                 "actors": [
-                    {"name": "A", "speed": 200},
+                    {"name": "A", "speed": 200, "faction": "Shadowkin"},
                     {
                         "name": "B",
                         "speed": 210,
+                        "faction": "Undead Hordes",
                         "form_start": "Alt",
                         "speed_by_form": {"Alt": 333},
                         "metamorph": {"cooldown_turns": 4},
@@ -32,7 +33,9 @@ def test_load_battle_spec_happy_path(tmp_path: Path) -> None:
     spec = load_battle_spec(p)
     assert spec.boss.name == "Boss"
     assert spec.boss.speed == 250.0
+    assert spec.boss.faction == "Demonspawn"
     assert [a.name for a in spec.actors] == ["A", "B"]
+    assert [a.faction for a in spec.actors] == ["Shadowkin", "Undead Hordes"]
     assert spec.actors[1].form_start == "Alt"
     assert spec.actors[1].speed_by_form == {"Alt": 333.0}
     assert spec.actors[1].metamorph == {"cooldown_turns": 4}
@@ -55,6 +58,8 @@ def test_load_battle_spec_happy_path(tmp_path: Path) -> None:
             },
             "speed_by_form",
         ),
+        ({"boss": {"name": "Boss", "speed": 250, "faction": 123}, "actors": [{"name": "A", "speed": 200}]}, "boss.faction must be a non-empty string when provided"),
+        ({"boss": {"name": "Boss", "speed": 250}, "actors": [{"name": "A", "speed": 200, "faction": ""}]}, "actors[0].faction must be a non-empty string when provided"),
     ],
 )
 def test_load_battle_spec_rejects_bad_inputs(tmp_path: Path, payload: dict, msg: str) -> None:

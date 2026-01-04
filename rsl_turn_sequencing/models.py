@@ -15,6 +15,8 @@ class Actor:
     #   - shield == 0 => "BROKEN"
     shield: int = 0
     is_boss: bool = False
+    # Optional metadata for faction-gated behaviors (e.g., join attacks).
+    faction: str | None = None
     # Optional health model (only used when tests require it, e.g., Poison).
     max_hp: float = 0.0
     hp: float = 0.0
