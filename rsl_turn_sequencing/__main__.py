@@ -41,7 +41,16 @@ def _actors_from_battle_spec(path: Path) -> list[Actor]:
     boss_speed = float(spec.boss.speed)
     if spec.boss.form_start and spec.boss.speed_by_form and spec.boss.form_start in spec.boss.speed_by_form:
         boss_speed = float(spec.boss.speed_by_form[spec.boss.form_start])
-    actors.append(Actor(spec.boss.name, boss_speed, is_boss=True))
+    actors.append(
+        Actor(
+            spec.boss.name,
+            boss_speed,
+            is_boss=True,
+            shield=0,
+            shield_max=spec.boss.shield_max,
+        )
+    )
+
     return actors
 
 

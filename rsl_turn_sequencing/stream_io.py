@@ -18,12 +18,15 @@ class BattleSpecActor:
     speed: float
     # Optional metadata for faction-gated behaviors (e.g., join attacks).
     faction: str | None = None
+    # Optional boss-only: maximum shield value used for TURN_START reset semantics.
+    shield_max: int | None = None
     # Optional: starting form for Mythical/transform champions.
     form_start: str | None = None
     # Optional: speed overrides by form name.
     speed_by_form: dict[str, float] | None = None
     # Optional: reserved for Metamorph modeling (not enforced yet).
     metamorph: dict[str, Any] | None = None
+
 
 
 @dataclass(frozen=True)
@@ -92,6 +95,13 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
     if faction is not None and (not isinstance(faction, str) or not faction.strip()):
         raise InputFormatError(f"{label}.faction must be a non-empty string when provided")
 
+    shield_max = raw.get("shield_max", None)
+    if shield_max is not None:
+        if not isinstance(shield_max, int):
+            raise InputFormatError(f"{label}.shield_max must be an int when provided")
+        if shield_max < 0:
+            raise InputFormatError(f"{label}.shield_max must be >= 0 when provided")
+
     form_start = raw.get("form_start", None)
     if form_start is not None and (not isinstance(form_start, str) or not form_start.strip()):
         raise InputFormatError(f"{label}.form_start must be a non-empty string when provided")
@@ -117,10 +127,12 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
         name=str(name),
         speed=float(speed),
         faction=str(faction) if faction is not None else None,
+        shield_max=int(shield_max) if shield_max is not None else None,
         form_start=str(form_start) if form_start is not None else None,
         speed_by_form=speed_by_form,
         metamorph=metamorph,
     )
+
 
 
 def load_event_stream(path: Path) -> list[Event]:
