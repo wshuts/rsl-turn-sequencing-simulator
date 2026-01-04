@@ -189,16 +189,25 @@ def step_tick(
                 phase=EventType.TURN_START,
             )
 
-    # Boss shield hit-counter semantics (C2): apply turn-caused hits before TURN_END snapshot.
-    # This is deterministic and data-driven via the optional hit_counts_by_actor mapping.
+    # Boss shield hit-counter semantics (C2):
+    # Apply turn-caused hits before TURN_END snapshot.
+    # Supports:
+    #   - actor-driven hits (skills, blessings)
+    #   - non-actor hits (e.g., reflect), keyed under "REFLECT"
     if hit_counts_by_actor is not None:
         boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
-        if boss is None:
-            boss = next((a for a in actors if a.name == "Boss"), None)
-        if boss is not None and best is not boss:
-            hits = int(hit_counts_by_actor.get(best.name, 0))
-            if hits > 0:
-                boss.shield = max(0, int(getattr(boss, "shield", 0)) - hits)
+        if boss is not None:
+            # Hits from the acting actor (if not boss)
+            if best is not boss:
+                hits = int(hit_counts_by_actor.get(best.name, 0))
+                if hits > 0:
+                    boss.shield = max(0, int(getattr(boss, "shield", 0)) - hits)
+
+            # Hits not attributable to the acting actor (e.g., reflect)
+            reflect_hits = int(hit_counts_by_actor.get("REFLECT", 0))
+            if reflect_hits > 0:
+                boss.shield = max(0, int(getattr(boss, "shield", 0)) - reflect_hits)
+
 
     if event_sink is not None:
         # Optional snapshot capture at TURN_END (observer-only)
