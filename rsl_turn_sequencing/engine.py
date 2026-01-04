@@ -31,6 +31,7 @@ def step_tick(
         event_sink: EventSink | None = None,
         *,
         snapshot_capture: set[int] | None = None,
+        hit_counts_by_actor: dict[str, int] | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -188,6 +189,17 @@ def step_tick(
                 phase=EventType.TURN_START,
             )
 
+    # Boss shield hit-counter semantics (C2): apply turn-caused hits before TURN_END snapshot.
+    # This is deterministic and data-driven via the optional hit_counts_by_actor mapping.
+    if hit_counts_by_actor is not None:
+        boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
+        if boss is None:
+            boss = next((a for a in actors if a.name == "Boss"), None)
+        if boss is not None and best is not boss:
+            hits = int(hit_counts_by_actor.get(best.name, 0))
+            if hits > 0:
+                boss.shield = max(0, int(getattr(boss, "shield", 0)) - hits)
+
     if event_sink is not None:
         # Optional snapshot capture at TURN_END (observer-only)
         if (
@@ -211,7 +223,6 @@ def step_tick(
                     ],
                 },
             )
-
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
