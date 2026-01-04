@@ -1,2 +1,3 @@
 [tool.pytest.ini_options]
-addopts = ["--basetemp=C:/temp/pytest"]
+# Use a relative base temp directory so pytest runs on Windows, Linux, and CI.
+addopts = ["--basetemp=.pytest_tmp"]
