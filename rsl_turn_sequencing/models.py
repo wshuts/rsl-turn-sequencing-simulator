@@ -14,6 +14,12 @@ class Actor:
     #   - shield > 0  => "UP"
     #   - shield == 0 => "BROKEN"
     shield: int = 0
+
+    # Optional: maximum shield value used for boss TURN_START reset semantics.
+    # If provided on the boss actor, the simulator will reset `shield` to this value
+    # at the start of each boss turn (before TURN_START observability emission).
+    shield_max: int | None = None
+
     is_boss: bool = False
     # Optional metadata for faction-gated behaviors (e.g., join attacks).
     faction: str | None = None

@@ -124,6 +124,14 @@ def step_tick(
                    and (getattr(a, "faction", None) == "Shadowkin")
             ]
 
+        # Boss shield semantics (C1 deliverable):
+        # The boss shield resets to full at the start of the boss's own turn,
+        # before TURN_START is emitted.
+        if bool(getattr(best, "is_boss", False)):
+            shield_max = getattr(best, "shield_max", None)
+            if shield_max is not None:
+                best.shield = int(shield_max)
+
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             if join_attack_joiners is None:
@@ -229,6 +237,7 @@ def step_tick(
                 effect=str(e.kind),
             )
     return best
+
 
 
 def step_tick_debug(actors: list[Actor]) -> tuple[Actor | None, list[float]]:
