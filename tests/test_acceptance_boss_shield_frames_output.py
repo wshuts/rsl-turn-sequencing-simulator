@@ -6,22 +6,28 @@ from pathlib import Path
 from rsl_turn_sequencing.__main__ import main
 
 
-def test_acceptance_cli_prints_boss_frames_with_shield_reset(tmp_path: Path, capsys) -> None:
+def test_acceptance_cli_prints_boss_frames_with_pre_post_shield_changes(tmp_path: Path, capsys) -> None:
     """
-    Acceptance test for the user-facing contract:
+    Acceptance test for the user-facing contract (v0):
 
     - CLI can run a minimal battle spec
     - Output prints Boss Turn Frames
-    - Boss TURN_START shows shield reset to shield_max (PRE snapshot)
+    - Each turn row prints PRE and POST shield snapshots
+    - Non-boss actor turn can decrement shield (hit-counter semantics)
+    - Boss TURN_START resets shield to shield_max (PRE snapshot)
     """
 
     battle = {
-        "boss": {"name": "Boss", "speed": 1490, "shield_max": 21},
+        "boss": {"name": "Boss", "speed": 1500, "shield_max": 21},
         "actors": [
-            # Slightly faster so we get at least one non-boss row before boss closes the frame.
-            {"name": "A", "speed": 1500},
+            {"name": "A1", "speed": 2000},
         ],
+        # v0 scripting hook: when an actor takes a turn, apply this many shield hits
+        "hits_by_actor": {
+            "A1": 3
+        },
     }
+
     battle_path = tmp_path / "battle.json"
     battle_path.write_text(json.dumps(battle), encoding="utf-8")
 
@@ -33,6 +39,11 @@ def test_acceptance_cli_prints_boss_frames_with_shield_reset(tmp_path: Path, cap
     # Frame exists
     assert "Boss Turn #1" in out
 
-    # Boss row shows shield reset at PRE (TURN_START). Rendering uses "[<PRE>] Boss [<POST>]".
-    # We assert a robust substring that should survive spacing tweaks.
+    # A1 row shows shield moving from 21 -> 18 within the frame
+    assert "A1" in out
+    assert "21 UP" in out
+    assert "18 UP" in out
+
+    # Boss row shows shield reset to 21 UP at PRE (TURN_START)
+    assert "Boss" in out
     assert "Boss [21 UP" in out or "] Boss [21 UP" in out, out

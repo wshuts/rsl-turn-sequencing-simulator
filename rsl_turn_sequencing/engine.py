@@ -32,6 +32,7 @@ def step_tick(
         *,
         snapshot_capture: set[int] | None = None,
         hit_counts_by_actor: dict[str, int] | None = None,
+        hit_provider: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -196,20 +197,25 @@ def step_tick(
     #   - Single-actor hit injection (e.g., Coldheart A1)
     #   - Multi-source hit injection within one turn (e.g., Mikage A3 team-ups)
     #   - Non-actor hits such as reflect, keyed under "REFLECT"
-    if hit_counts_by_actor is not None:
+    current_hits = None
+    if hit_provider is not None:
+        current_hits = hit_provider(best.name) or {}
+    elif hit_counts_by_actor is not None:
+        current_hits = hit_counts_by_actor
+    if current_hits is not None:
         boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
         if boss is not None:
             # Sum all "normal" hits injected for this turn (may involve multiple sources).
             normal_hits = sum(
                 int(v)
-                for k, v in hit_counts_by_actor.items()
+                for k, v in current_hits.items()
                 if k != "REFLECT"
             )
             if normal_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - normal_hits)
 
             # Reflect hits are allowed during boss turns (or any turn) and are modeled separately.
-            reflect_hits = int(hit_counts_by_actor.get("REFLECT", 0))
+            reflect_hits = int(current_hits.get("REFLECT", 0))
             if reflect_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - reflect_hits)
 
