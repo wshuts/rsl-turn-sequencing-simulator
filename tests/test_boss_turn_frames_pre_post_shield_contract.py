@@ -14,18 +14,24 @@ def test_boss_turn_frame_has_rows_with_pre_post_shield_and_closes_on_boss_turn_e
       - boss TURN_START resets shield to shield_max and appears in boss row PRE
     """
 
-    # Arrange: predictable 2-tick sequence with TM_GATE=1430:
-    #   tick1: A1 TM=2000, Boss TM=1500 => A1 acts
-    #   tick2: A1 TM=2000, Boss TM=3000 => Boss acts (frame closes)
+    # Arrange: predictable 2-tick sequence:
+    # tick1: A1 acts (faster)
+    # tick2: Boss acts (frame closes)
     shield_start = 21
 
-    boss = Actor(name="Boss", speed=1500.0, shield=shield_start, shield_max=shield_start, is_boss=True)
+    boss = Actor(
+        name="Boss",
+        speed=1500.0,
+        is_boss=True,
+        shield=shield_start,
+        shield_max=shield_start,
+    )
     a1 = Actor(name="A1", speed=2000.0)
 
     actors = [a1, boss]
     sink = InMemoryEventSink()
 
-    # Act: tick1 A1 acts and we inject 3 hits against the boss shield
+    # Act: tick1 A1 acts and we inject 3 shield hits
     step_tick(actors, event_sink=sink, hit_counts_by_actor={"A1": 3})
 
     # Act: tick2 Boss acts (no hits injected)
