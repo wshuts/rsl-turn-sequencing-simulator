@@ -17,6 +17,10 @@ from rsl_turn_sequencing.stream_io import (
 )
 
 
+class SkillSequenceExhaustedError(RuntimeError):
+    """Raised when a skill_sequence is exhausted under a fail-fast policy."""
+
+
 def _demo_actors() -> list[Actor]:
     # v0 deterministic demo (kept minimal)
     boss = Actor(name="Boss", speed=1500.0, is_boss=True, shield=21, shield_max=21)
@@ -24,8 +28,7 @@ def _demo_actors() -> list[Actor]:
     return [a1, boss]
 
 
-def _actors_from_battle_spec(path: Path) -> list[Actor]:
-    spec = load_battle_spec(path)
+def _actors_from_battle_spec(spec) -> list[Actor]:
 
     actors: list[Actor] = []
     for a in spec.actors:
@@ -33,7 +36,14 @@ def _actors_from_battle_spec(path: Path) -> list[Actor]:
         # v0: if a form is provided, allow a speed override via speed_by_form.
         if a.form_start and a.speed_by_form and a.form_start in a.speed_by_form:
             speed = float(a.speed_by_form[a.form_start])
-        actors.append(Actor(a.name, speed, faction=a.faction))
+        actors.append(
+            Actor(
+                a.name,
+                speed,
+                faction=a.faction,
+                skill_sequence=list(a.skill_sequence) if a.skill_sequence is not None else None,
+            )
+        )
 
     boss_speed = float(spec.boss.speed)
     if spec.boss.form_start and spec.boss.speed_by_form and spec.boss.form_start in spec.boss.speed_by_form:
@@ -50,10 +60,44 @@ def _actors_from_battle_spec(path: Path) -> list[Actor]:
             shield=boss_shield_start,
             shield_max=boss_shield_max,
             faction=spec.boss.faction,
+            skill_sequence=list(spec.boss.skill_sequence) if spec.boss.skill_sequence is not None else None,
         )
     )
 
     return actors
+
+
+def _consume_next_skill(
+    *,
+    actors: list[Actor],
+    actor_name: str,
+    sequence_policy: str | None,
+) -> str | None:
+    """Consume and return the next skill id for the given actor, if any.
+
+    This function does not interpret skill ids; it only advances the cursor.
+    """
+    if not sequence_policy:
+        return None
+    if sequence_policy != "error_if_exhausted":
+        return None
+
+    actor = next((a for a in actors if a.name == actor_name), None)
+    if actor is None:
+        return None
+    seq = getattr(actor, "skill_sequence", None)
+    if not seq:
+        return None
+
+    cursor = int(getattr(actor, "skill_sequence_cursor", 0))
+    if cursor >= len(seq):
+        raise SkillSequenceExhaustedError(
+            f"skill_sequence exhausted for {actor.name} (len={len(seq)}, cursor={cursor})"
+        )
+
+    skill_id = str(seq[cursor])
+    actor.skill_sequence_cursor = cursor + 1
+    return skill_id
 
 
 def _fmt_shield(snap: object | None) -> str:
@@ -122,14 +166,24 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if args.battle:
         battle_path = Path(str(args.battle))
         try:
-            actors = _actors_from_battle_spec(battle_path)
+            spec = load_battle_spec(battle_path)
+            actors = _actors_from_battle_spec(spec)
             hits_by_actor = _load_hits_by_actor(battle_path)
         except InputFormatError as e:
             print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
             return 2
 
-        # v0: apply hits only for the current winner's turn
+        sequence_policy = spec.options.sequence_policy
+
+        # v0: apply hits only for the current winner's turn.
+        # Additionally, consume the next skill id (cursor only) to support
+        # sequence_policy=error_if_exhausted before skill→hit bridging.
         def _provider(winner: str) -> dict[str, int]:
+            _consume_next_skill(
+                actors=actors,
+                actor_name=winner,
+                sequence_policy=sequence_policy,
+            )
             hits = int(hits_by_actor.get(winner, 0))
             return {winner: hits} if hits > 0 else {}
 
@@ -139,8 +193,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     sink = InMemoryEventSink()
 
-    for _ in range(int(args.ticks)):
-        step_tick(actors, event_sink=sink, hit_provider=hit_provider)
+    try:
+        for _ in range(int(args.ticks)):
+            step_tick(actors, event_sink=sink, hit_provider=hit_provider)
+    except SkillSequenceExhaustedError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
 
     sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=sink.events))
     return 0

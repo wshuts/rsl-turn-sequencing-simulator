@@ -27,11 +27,24 @@ class BattleSpecActor:
     # Optional: reserved for Metamorph modeling (not enforced yet).
     metamorph: dict[str, Any] | None = None
 
+    # Optional: deterministic skill selection for acceptance tests.
+    # Each time the actor takes a turn, one entry is consumed.
+    skill_sequence: list[str] | None = None
+
+
+@dataclass(frozen=True)
+class BattleSpecOptions:
+    # Behavior when an actor consumes all entries in skill_sequence.
+    # Supported in v0:
+    #   - "error_if_exhausted": fail fast when any actor runs out of skills.
+    sequence_policy: str | None = None
+
 
 @dataclass(frozen=True)
 class BattleSpec:
     boss: BattleSpecActor
     actors: list[BattleSpecActor]
+    options: BattleSpecOptions = BattleSpecOptions()
 
 
 def load_battle_spec(path: Path) -> BattleSpec:
@@ -82,12 +95,15 @@ def load_battle_spec(path: Path) -> BattleSpec:
     boss_raw = raw.get("boss")
     actors_raw = raw.get("actors")
     champions_raw = raw.get("champions")
+    options_raw = raw.get("options", {})
 
     if not isinstance(boss_raw, dict):
         raise InputFormatError("boss must be an object")
 
     boss = _parse_battle_spec_actor(boss_raw, label="boss")
     actors: list[BattleSpecActor] = []
+
+    options = _parse_battle_spec_options(options_raw)
 
     # Prefer legacy actors format if present (backwards compatibility)
     if actors_raw is not None:
@@ -130,7 +146,7 @@ def load_battle_spec(path: Path) -> BattleSpec:
     else:
         raise InputFormatError("battle spec must include either 'actors' or 'champions'")
 
-    return BattleSpec(boss=boss, actors=actors)
+    return BattleSpec(boss=boss, actors=actors, options=options)
 
 
 def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecActor:
@@ -173,6 +189,17 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
     if metamorph is not None and not isinstance(metamorph, dict):
         raise InputFormatError(f"{label}.metamorph must be an object when provided")
 
+    skill_sequence = raw.get("skill_sequence", None)
+    if skill_sequence is not None:
+        if not isinstance(skill_sequence, list) or not skill_sequence:
+            raise InputFormatError(f"{label}.skill_sequence must be a non-empty array when provided")
+        parsed_seq: list[str] = []
+        for i, s in enumerate(skill_sequence):
+            if not isinstance(s, str) or not s.strip():
+                raise InputFormatError(f"{label}.skill_sequence[{i}] must be a non-empty string")
+            parsed_seq.append(str(s))
+        skill_sequence = parsed_seq
+
     return BattleSpecActor(
         name=str(name),
         speed=float(speed),
@@ -181,7 +208,27 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
         form_start=str(form_start) if form_start is not None else None,
         speed_by_form=speed_by_form,
         metamorph=metamorph,
+        skill_sequence=skill_sequence,
     )
+
+
+def _parse_battle_spec_options(raw: object) -> BattleSpecOptions:
+    if raw is None:
+        return BattleSpecOptions()
+    if not isinstance(raw, dict):
+        raise InputFormatError("options must be an object")
+
+    sequence_policy = raw.get("sequence_policy", None)
+    if sequence_policy is not None:
+        if not isinstance(sequence_policy, str) or not sequence_policy.strip():
+            raise InputFormatError("options.sequence_policy must be a non-empty string when provided")
+        sequence_policy = str(sequence_policy)
+        if sequence_policy not in {"error_if_exhausted"}:
+            raise InputFormatError(
+                "options.sequence_policy must be one of: error_if_exhausted"
+            )
+
+    return BattleSpecOptions(sequence_policy=sequence_policy)
 
 
 def load_event_stream(path: Path) -> list[Event]:

@@ -25,6 +25,15 @@ class Actor:
     # Optional metadata for faction-gated behaviors (e.g., join attacks).
     faction: str | None = None
 
+    # Optional, deterministic skill selection for acceptance tests.
+    #
+    # When provided, each time this actor takes a turn, the next entry in
+    # `skill_sequence` is consumed and `skill_sequence_cursor` is incremented.
+    # The meaning of the skill ids (e.g., "A1", "A3", "B_A2") is not interpreted
+    # by the engine yet — this is groundwork for skill→hit bridging.
+    skill_sequence: list[str] | None = None
+    skill_sequence_cursor: int = 0
+
     # Blessings live here (data-driven). Tests may use this for deterministic procs.
     # Example:
     #   {"phantom_touch": {"cooldown": 1, "rank": 4}}
