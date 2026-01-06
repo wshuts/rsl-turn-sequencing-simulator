@@ -1,0 +1,95 @@
+{
+  "boss": {
+    "name": "Fire Knight",
+    "shield_max": 21,
+    "speed": 250
+  },
+  "champions": [
+    {
+      "slot": 1,
+      "name": "Mikage",
+      "speed": 340,
+      "skill_sequence": [
+        "A_A1",
+        "A_A4",
+        "B_A3",
+        "B_A2",
+        "B_A1",
+        "B_A1",
+        "B_A3",
+        "B_A2",
+        "B_A1",
+        "B_A1"
+      ]
+    },
+    {
+      "slot": 2,
+      "name": "Mithrala",
+      "speed": 282,
+      "skill_sequence": [
+        "A1",
+        "A3",
+        "A2",
+        "A1",
+        "A3",
+        "A2",
+        "A1"
+      ]
+    },
+    {
+      "slot": 3,
+      "name": "Martyr",
+      "speed": 252,
+      "skill_sequence": [
+        "A2",
+        "A1",
+        "A3",
+        "A2",
+        "A1",
+        "A1"
+      ]
+    },
+    {
+      "slot": 4,
+      "name": "Tomb Lord",
+      "speed": 270,
+      "skill_sequence": [
+        "A2",
+        "A3",
+        "A1",
+        "A1",
+        "A2",
+        "A1",
+        "A3"
+      ]
+    },
+    {
+      "slot": 5,
+      "name": "Coldheart",
+      "speed": 265,
+      "skill_sequence": [
+        "A1",
+        "A3",
+        "A1",
+        "A1",
+        "A1",
+        "A1",
+        "A3"
+      ]
+    }
+  ],
+  "options": {
+    "sequence_policy": "error_if_exhausted",
+    "max_turns": 100
+  },
+  "notes": {
+    "source": "Narrated from screencaps; stop after Coldheart A3 (next boss action kills Tomb Lord + Coldheart).",
+    "team_slot_order": [
+      "Mikage",
+      "Mithrala",
+      "Martyr",
+      "Tomb Lord",
+      "Coldheart"
+    ]
+  }
+}
