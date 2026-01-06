@@ -32,13 +32,6 @@
                 "Current team has no Shadowkin allies; no join occurs.",
                 "Buff: Places a Shield on the ally with the lowest HP for 2 turns.",
                 "Join condition and buff target condition are independent."
-              ],
-              "hit_sources": [
-                {
-                  "kind": "skill_hits",
-                  "count": 1,
-                  "conditions": []
-                }
               ]
             },
             "A2": {
@@ -50,13 +43,6 @@
                 "Attacks all enemies (1 hit each).",
                 "Decreases duration of enemy buffs by 1; ally debuffs by 1.",
                 "Then increases duration of enemy debuffs by 1; ally buffs by 1."
-              ],
-              "hit_sources": [
-                {
-                  "kind": "skill_hits",
-                  "count": 1,
-                  "conditions": []
-                }
               ]
             },
             "A3": {
@@ -96,7 +82,7 @@
               "hits": 0,
               "trigger": "turn_start",
               "notes": [
-                "At the start of Mikage’s turn, removes all debuffs from the ally with the highest ATK."
+                "At the start of Mikage\u2019s turn, removes all debuffs from the ally with the highest ATK."
               ]
             }
           }
@@ -112,13 +98,6 @@
                 "Attacks 1 enemy (1 hit).",
                 "Places Sleep for 1 turn.",
                 "Decreases target Turn Meter by 15%."
-              ],
-              "hit_sources": [
-                {
-                  "kind": "skill_hits",
-                  "count": 1,
-                  "conditions": []
-                }
               ]
             },
             "A2": {
@@ -130,13 +109,6 @@
                 "Attacks all enemies (1 hit each).",
                 "Places Stun for 1 turn.",
                 "Decreases enemy Turn Meters by 30%."
-              ],
-              "hit_sources": [
-                {
-                  "kind": "skill_hits",
-                  "count": 1,
-                  "conditions": []
-                }
               ]
             },
             "A3": {
@@ -169,7 +141,7 @@
               "hits": 0,
               "trigger": "turn_start",
               "notes": [
-                "At the start of Mikage’s turn, decreases the Turn Meter of the enemy with the highest ATK by 15%."
+                "At the start of Mikage\u2019s turn, decreases the Turn Meter of the enemy with the highest ATK by 15%."
               ]
             }
           }
@@ -190,13 +162,6 @@
           "hits": 2,
           "notes": [
             "Attacks 2 times. Each hit can place 5% Poison for 2 turns."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 2,
-              "conditions": []
-            }
           ]
         },
         "A2": {
@@ -208,13 +173,6 @@
             "Attacks all enemies (1 hit each).",
             "Places Hex for 2 turns.",
             "Places Increase DEF and Increase ATK on all allies for 2 turns."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         },
         "A3": {
@@ -233,7 +191,7 @@
           "hits": 0,
           "notes": [
             "When attacked by enemies under Hex, can apply Petrification.",
-            "Also increases Mithrala’s RES based on her ACC."
+            "Also increases Mithrala\u2019s RES based on her ACC."
           ]
         }
       }
@@ -249,13 +207,6 @@
           "hits": 1,
           "notes": [
             "Attacks 1 enemy (1 hit). Can place 60% Decrease DEF for 2 turns."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         },
         "A2": {
@@ -280,13 +231,6 @@
             "Attacks all enemies (1 hit each).",
             "Places 50% Decrease ATK for 2 turns.",
             "Places Provoke for 1 turn."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         }
       },
@@ -324,13 +268,6 @@
           "notes": [
             "Attacks 1 enemy 3 times.",
             "Can place 30% Decrease SPD for 2 turns (on crit)."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 3,
-              "conditions": []
-            }
           ]
         },
         "A2": {
@@ -340,13 +277,6 @@
           "notes": [
             "Attacks 1 enemy (1 hit).",
             "Can place multiple 5% Poisons on all enemies."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         },
         "A3": {
@@ -375,13 +305,6 @@
           "notes": [
             "Attacks 4 times.",
             "Each hit can place 100% Heal Reduction for 2 turns."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 4,
-              "conditions": []
-            }
           ]
         },
         "A2": {
@@ -393,13 +316,6 @@
             "Attacks all enemies (1 hit each).",
             "Can place Decrease ACC.",
             "Places Poison if target is under Heal Reduction."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         },
         "A3": {
@@ -410,13 +326,6 @@
             "Attacks 1 enemy (1 hit).",
             "Decreases target Turn Meter by 100%.",
             "Damage scales on enemy MAX HP (capped vs bosses)."
-          ],
-          "hit_sources": [
-            {
-              "kind": "skill_hits",
-              "count": 1,
-              "conditions": []
-            }
           ]
         }
       },
