@@ -37,11 +37,23 @@ class BattleSpec:
 def load_battle_spec(path: Path) -> BattleSpec:
     """Load and validate a minimal battle spec (JIT input v0).
 
-    Format:
+    Supported formats:
+
+    Legacy format:
       {
         "boss": {"name": "Boss", "speed": 250},
         "actors": [
           {"name": "Mikage", "speed": 340},
+          ...
+        ]
+      }
+
+    Slot-ordered format:
+      {
+        "boss": {"name": "Fire Knight", "speed": 250, "shield_max": 21},
+        "champions": [
+          {"slot": 1, "name": "Mikage", "speed": 340},
+          {"slot": 2, "name": "Mithrala", "speed": 282},
           ...
         ]
       }
@@ -60,24 +72,63 @@ def load_battle_spec(path: Path) -> BattleSpec:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
-        raise InputFormatError(f"invalid JSON: {e.msg} (line {e.lineno}, col {e.colno})") from e
+        raise InputFormatError(
+            f"invalid JSON: {e.msg} (line {e.lineno}, col {e.colno})"
+        ) from e
 
     if not isinstance(raw, dict):
         raise InputFormatError("root must be a JSON object")
 
     boss_raw = raw.get("boss")
     actors_raw = raw.get("actors")
+    champions_raw = raw.get("champions")
+
     if not isinstance(boss_raw, dict):
         raise InputFormatError("boss must be an object")
-    if not isinstance(actors_raw, list) or not actors_raw:
-        raise InputFormatError("actors must be a non-empty array")
 
     boss = _parse_battle_spec_actor(boss_raw, label="boss")
     actors: list[BattleSpecActor] = []
-    for i, item in enumerate(actors_raw):
-        if not isinstance(item, dict):
-            raise InputFormatError(f"actors[{i}] must be an object")
-        actors.append(_parse_battle_spec_actor(item, label=f"actors[{i}]"))
+
+    # Prefer legacy actors format if present (backwards compatibility)
+    if actors_raw is not None:
+        if not isinstance(actors_raw, list) or not actors_raw:
+            raise InputFormatError("actors must be a non-empty array")
+        for i, item in enumerate(actors_raw):
+            if not isinstance(item, dict):
+                raise InputFormatError(f"actors[{i}] must be an object")
+            actors.append(_parse_battle_spec_actor(item, label=f"actors[{i}]"))
+
+    # Otherwise, accept slot-ordered champions format
+    elif champions_raw is not None:
+        if not isinstance(champions_raw, list) or not champions_raw:
+            raise InputFormatError("champions must be a non-empty array")
+
+        seen_slots: set[int] = set()
+        rows: list[tuple[int, BattleSpecActor]] = []
+
+        for i, item in enumerate(champions_raw):
+            if not isinstance(item, dict):
+                raise InputFormatError(f"champions[{i}] must be an object")
+
+            slot = item.get("slot")
+            if not isinstance(slot, int):
+                raise InputFormatError(f"champions[{i}].slot must be an int in [1..5]")
+            if slot < 1 or slot > 5:
+                raise InputFormatError(
+                    f"champions[{i}].slot must be in [1..5] (got {slot})"
+                )
+            if slot in seen_slots:
+                raise InputFormatError(f"duplicate slot {slot} in champions")
+            seen_slots.add(slot)
+
+            actor = _parse_battle_spec_actor(item, label=f"champions[{i}]")
+            rows.append((slot, actor))
+
+        rows.sort(key=lambda t: t[0])
+        actors = [a for _, a in rows]
+
+    else:
+        raise InputFormatError("battle spec must include either 'actors' or 'champions'")
 
     return BattleSpec(boss=boss, actors=actors)
 
@@ -134,19 +185,7 @@ def _parse_battle_spec_actor(raw: dict[str, Any], *, label: str) -> BattleSpecAc
 
 
 def load_event_stream(path: Path) -> list[Event]:
-    """Load and validate an ordered structured event stream from JSON.
-
-    The input format is a JSON array of objects. Each object must have:
-      - tick: int (>= 1)
-      - seq: int (>= 1)
-      - type: str (must match EventType)
-      - actor: str | null
-      - data: object (must be a JSON object / dict)
-
-    Ordering contract:
-      - Events must be strictly increasing by (tick, seq).
-      - seq must be strictly increasing within a tick.
-    """
+    """Load and validate an ordered structured event stream from JSON."""
 
     if not path.exists():
         raise InputFormatError(f"file not found: {path}")
@@ -156,7 +195,9 @@ def load_event_stream(path: Path) -> list[Event]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
-        raise InputFormatError(f"invalid JSON: {e.msg} (line {e.lineno}, col {e.colno})") from e
+        raise InputFormatError(
+            f"invalid JSON: {e.msg} (line {e.lineno}, col {e.colno})"
+        ) from e
 
     if not isinstance(raw, list):
         raise InputFormatError("root must be a JSON array of events")
@@ -188,7 +229,9 @@ def load_event_stream(path: Path) -> list[Event]:
         try:
             event_type = EventType(etype)
         except Exception as e:
-            raise InputFormatError(f"event[{i}].type is not a valid EventType: {etype!r}") from e
+            raise InputFormatError(
+                f"event[{i}].type is not a valid EventType: {etype!r}"
+            ) from e
 
         key = (tick, seq)
         if last_key is not None and key <= last_key:
