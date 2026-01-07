@@ -110,7 +110,7 @@ def _fmt_shield(snap: object | None) -> str:
     return f"{int(value)} {str(status)}"
 
 
-def _render_text_report(*, boss_actor: str, events) -> str:
+def _render_text_report(*, boss_actor: str, events, row_index_start: int | None = None) -> str:
     rows = derive_turn_rows(events)
     frames = group_rows_into_boss_frames(rows, boss_actor=boss_actor)
 
@@ -119,14 +119,23 @@ def _render_text_report(*, boss_actor: str, events) -> str:
         out.append("(No complete boss frames were produced. Try increasing --ticks.)")
         return "\n".join(out)
 
+    row_idx = row_index_start
+
     for frame in frames:
         out.append(f"Boss Turn #{frame.boss_turn_index}")
         for row in frame.rows:
             pre = _fmt_shield(row.pre_shield)
             post = _fmt_shield(row.post_shield)
-            out.append(f"  [{pre:<10s}] {row.actor} [{post}]")
+
+            if row_idx is None:
+                out.append(f"  [{pre:<10s}] {row.actor} [{post}]")
+            else:
+                out.append(f"  {row_idx:>3d}: [{pre:<10s}] {row.actor} [{post}]")
+                row_idx += 1
+
         out.append("")
     return "\n".join(out).rstrip() + "\n"
+
 
 
 def _load_hits_by_actor(path: Path) -> dict[str, int]:
@@ -291,7 +300,13 @@ def _cmd_run(args: argparse.Namespace) -> int:
         except InputFormatError as e:
             print(f"ERROR: invalid input stream: {e}", file=sys.stderr)
             return 2
-        sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=events))
+        sys.stdout.write(
+            _render_text_report(
+                boss_actor=str(args.boss_actor),
+                events=events,
+                row_index_start=args.row_index_start,
+            )
+        )
         return 0
 
     hit_provider: Callable[[str], dict[str, int]] | None = None
@@ -301,22 +316,19 @@ def _cmd_run(args: argparse.Namespace) -> int:
         try:
             spec = load_battle_spec(battle_path)
             actors = _actors_from_battle_spec(spec)
-            hits_by_actor = _load_hits_by_actor(battle_path)  # legacy
+            hits_by_actor = _load_hits_by_actor(battle_path)  # legacy fallback
         except InputFormatError as e:
             print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
             return 2
 
         sequence_policy = spec.options.sequence_policy
 
-        # Load FK dataset lookup (used when skill_sequence entries are present).
         try:
             hits_lookup = _load_fk_dataset_hit_lookup()
         except InputFormatError as e:
             print(f"ERROR: cannot load FK dataset: {e}", file=sys.stderr)
             return 2
 
-        # v1: consume skill_sequence and translate skill->hits via dataset.
-        # If no skill was consumed (no sequence), we fall back to legacy hits_by_actor.
         def _provider(winner: str) -> dict[str, int]:
             skill_id = _consume_next_skill(
                 actors=actors,
@@ -327,7 +339,6 @@ def _cmd_run(args: argparse.Namespace) -> int:
                 hits = hits_lookup.hits_for(winner, skill_id)
             else:
                 hits = int(hits_by_actor.get(winner, 0))
-
             return {winner: hits} if hits > 0 else {}
 
         hit_provider = _provider
@@ -346,7 +357,13 @@ def _cmd_run(args: argparse.Namespace) -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
 
-    sys.stdout.write(_render_text_report(boss_actor=str(args.boss_actor), events=sink.events))
+    sys.stdout.write(
+        _render_text_report(
+            boss_actor=str(args.boss_actor),
+            events=sink.events,
+            row_index_start=args.row_index_start,
+        )
+    )
     return 0
 
 
@@ -354,21 +371,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="rsl_turn_sequencing",
         description=(
-            "RSL Turn Sequencing Simulator — user harness (Epic D).\n"
+            "RSL Turn Sequencing Simulator — user harness.\n"
             "\n"
-            "This CLI is observer-only: it does not change HP or do damage math.\n"
-            "It prints Boss Turn Frames with PRE/POST shield snapshots."
+            "Observer-only: no HP/damage math.\n"
+            "Prints Boss Turn Frames with PRE/POST shield snapshots."
         ),
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
 
     run = sub.add_parser("run", help="Run a simulation and print Boss Turn Frames.")
-    run.add_argument("--demo", action="store_true", help="Run the built-in deterministic demo roster (v0).")
-    run.add_argument("--battle", type=str, help="Run a minimal battle spec JSON.")
+    run.add_argument("--demo", action="store_true", help="Run the built-in deterministic demo roster.")
+    run.add_argument("--battle", type=str, help="Run a battle spec JSON.")
     run.add_argument("--input", type=str, help="Render an existing event stream JSON.")
     run.add_argument("--ticks", type=int, default=50, help="Number of ticks to simulate.")
     run.add_argument("--boss-actor", type=str, default="Boss", help="Actor name used to close frames.")
+    run.add_argument(
+        "--row-index-start",
+        type=int,
+        default=None,
+        help="Optional: prefix each printed actor row with an incrementing index starting at this value.",
+    )
     run.set_defaults(func=_cmd_run)
 
     return parser
