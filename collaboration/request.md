@@ -4,12 +4,13 @@ Standing Working Agreement applies.
 
 Baseline:
 - Repository state: clean
-- Tests: 45 passing, 0 failing
-- Relevant files: rsl_turn_sequencing/`__main.py__`
+- Tests: 45 passing, 1 failing
+- Relevant files: tests/test_acceptance_mikage_metamorph_extra_turn.py
 
 Change Requested:
-- Capture Mikage’s extra-turn behavior using an acceptance test.
+- All tests passing
 
 Expected Delivery:
-- One acceptance test file (complete file replacement).
-- No production code changes.
+- new passing test confirming no engine tick during extra turn
+- passing test_acceptance_mikage_metamorph_grants_an_immediate_extra_turn
+- verify: CLI output confirms presence of extra turn
