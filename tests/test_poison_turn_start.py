@@ -26,6 +26,10 @@ def test_poison_triggers_and_decrements_at_turn_start_and_works_on_extra_turns()
       - Trigger: TURN_START
       - Duration decrement: TURN_START (Poison special case)
       - Extra turns: do NOT perform meter fill, but still fire TURN_START triggers
+
+    Note: Extra turns do not advance the global battle clock (EventSink.current_tick).
+    This test therefore inspects events emitted during the extra turn by slicing the
+    newly-emitted events, rather than grouping by tick.
     """
     a = Actor("A", 340.0, max_hp=1000.0, hp=1000.0)
     b = Actor("B", 100.0, max_hp=1000.0, hp=1000.0)
@@ -55,6 +59,10 @@ def test_poison_triggers_and_decrements_at_turn_start_and_works_on_extra_turns()
     # --- Extra turn for A (no fill) ---
     b_tm_before = float(b.turn_meter)
     a.extra_turns = 1
+
+    # Capture the event boundary; extra turn events may share the same tick number.
+    events_before = len(sink.events)
+
     t2_winner = step_tick(actors, event_sink=sink)
     assert t2_winner is not None and t2_winner.name == "A"
 
@@ -67,10 +75,10 @@ def test_poison_triggers_and_decrements_at_turn_start_and_works_on_extra_turns()
     # After TURN_END, poison should expire (2 total triggers).
     assert a.effects == []
 
-    # Event proof: on this tick we should see EFFECT_TRIGGERED and EFFECT_EXPIRED
-    # BEFORE TURN_END, because Poison expires at TURN_START.
-    t2 = sink.current_tick
-    types2 = [e.type for e in events_at_tick(sink, t2)]
+    # Event proof: within the extra turn's newly-emitted events we should see
+    # EFFECT_TRIGGERED and EFFECT_EXPIRED BEFORE TURN_END, because Poison expires at TURN_START.
+    new_events = sink.events[events_before:]
+    types2 = [e.type for e in new_events]
     assert EventType.TURN_START in types2
     assert EventType.EFFECT_TRIGGERED in types2
     assert EventType.TURN_END in types2

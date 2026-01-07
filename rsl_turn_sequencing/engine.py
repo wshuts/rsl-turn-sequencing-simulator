@@ -48,10 +48,11 @@ def step_tick(
     - Higher turn_meter wins
     - If equal, higher speed wins
     - If still equal, earlier in the list wins
+
+    Extra turn contract:
+    - Resolving an extra turn MUST NOT advance the global battle clock.
+      (The EventSink tick counter is the observable proxy for that clock.)
     """
-    if event_sink is not None:
-        event_sink.start_tick()
-        event_sink.emit(EventType.TICK_START)
 
     # 0) extra turn handling (no fill)
     # If any actor has pending extra turns, grant the turn immediately.
@@ -59,9 +60,20 @@ def step_tick(
     if extra_candidates:
         i_best, best = extra_candidates[0]
         best.extra_turns = int(best.extra_turns) - 1
+        is_extra_turn = True
     else:
         best = None
         i_best = -1
+        is_extra_turn = False
+
+    # 0.5) tick start
+    # Normal ticks advance the global clock. Extra turns do not.
+    # If the sink has never started a tick (tick==0), we must start one
+    # to satisfy the sink's contract before emitting any events.
+    if event_sink is not None:
+        if (not is_extra_turn) or (event_sink.current_tick <= 0):
+            event_sink.start_tick()
+            event_sink.emit(EventType.TICK_START)
 
     # 1) simultaneous fill (only if no extra turn was granted)
     if best is None:
