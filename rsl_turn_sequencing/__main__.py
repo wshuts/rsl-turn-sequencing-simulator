@@ -134,26 +134,38 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
     for frame in frames:
         out.append(f"Boss Turn #{frame.boss_turn_index}")
 
-        # Determine padding width for actor labels (actor name + optional token) in this frame.
-        labels: list[str] = []
+        # Align output into fixed columns so the post-shield column doesn't
+        # visually "jump" between rows depending on whether a skill token is present.
+        #
+        # Columns:
+        #   [pre]  actor_name  {skill_token}  [post]
+        #
+        # The skill token column is padded to the maximum token width within the frame.
+        tokens: list[str | None] = []
         for row in frame.rows:
-            tok = _skill_token_for_row(row)
-            # Render consumed skill tokens in braces so they are visually distinct
-            # from turn-meter brackets.
-            labels.append(f"{row.actor} {{{tok}}}" if tok else row.actor)
+            tokens.append(_skill_token_for_row(row))
 
-        max_actor_len = max(len(label) for label in labels) if labels else 0
+        max_actor_len = max((len(row.actor) for row in frame.rows), default=0)
+        max_token_len = max((len(f"{{{t}}}") for t in tokens if t), default=0)
 
-        for row, label in zip(frame.rows, labels):
+        for row, tok in zip(frame.rows, tokens):
             pre = _fmt_shield(row.pre_shield)
             post = _fmt_shield(row.post_shield)
 
-            actor_padded = label.ljust(max_actor_len)
+            actor_padded = row.actor.ljust(max_actor_len)
+            token_cell = (f"{{{tok}}}" if tok else "")
+            token_padded = token_cell.ljust(max_token_len) if max_token_len else ""
 
             if row_idx is None:
-                out.append(f"  [{pre}] {actor_padded} [{post}]")
+                if token_padded:
+                    out.append(f"  [{pre}] {actor_padded} {token_padded} [{post}]")
+                else:
+                    out.append(f"  [{pre}] {actor_padded} [{post}]")
             else:
-                out.append(f"  {row_idx}: [{pre}] {actor_padded} [{post}]")
+                if token_padded:
+                    out.append(f"  {row_idx}: [{pre}] {actor_padded} {token_padded} [{post}]")
+                else:
+                    out.append(f"  {row_idx}: [{pre}] {actor_padded} [{post}]")
                 row_idx += 1
 
         out.append("")
