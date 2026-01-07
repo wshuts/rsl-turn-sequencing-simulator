@@ -1,0 +1,49 @@
+﻿Boss Turn #1
+  56: [21 UP] Mikage      {A_A1} [20 UP]
+  57: [20 UP] Mithrala    {A1}   [18 UP]
+  58: [18 UP] Tomb Lord   {A2}   [17 UP]
+  59: [17 UP] Coldheart   {A1}   [13 UP]
+  60: [13 UP] Martyr      {A2}   [13 UP]
+  61: [21 UP] Fire Knight        [21 UP]
+
+Boss Turn #2
+  62: [21 UP] Mikage      {A_A4} [21 UP]
+  63: [21 UP] Mithrala    {A3}   [21 UP]
+  64: [21 UP] Tomb Lord   {A3}   [21 UP]
+  65: [21 UP] Coldheart   {A3}   [20 UP]
+  66: [20 UP] Martyr      {A1}   [19 UP]
+  67: [19 UP] Mikage      {B_A3} [19 UP]
+  68: [21 UP] Fire Knight        [21 UP]
+
+Boss Turn #3
+  69: [21 UP] Mithrala    {A2}   [20 UP]
+  70: [20 UP] Tomb Lord   {A1}   [17 UP]
+  71: [17 UP] Coldheart   {A1}   [13 UP]
+  72: [13 UP] Mikage      {B_A2} [12 UP]
+  73: [12 UP] Martyr      {A3}   [11 UP]
+  74: [21 UP] Fire Knight        [21 UP]
+
+Boss Turn #4
+  75: [21 UP] Mithrala    {A1}   [19 UP]
+  76: [19 UP] Tomb Lord   {A1}   [16 UP]
+  77: [16 UP] Mikage      {B_A1} [15 UP]
+  78: [15 UP] Coldheart   {A1}   [11 UP]
+  79: [11 UP] Martyr      {A2}   [11 UP]
+  80: [21 UP] Fire Knight        [21 UP]
+
+Boss Turn #5
+  81: [21 UP] Mithrala    {A3}   [21 UP]
+  82: [21 UP] Mikage      {B_A1} [20 UP]
+  83: [20 UP] Tomb Lord   {A2}   [19 UP]
+  84: [19 UP] Coldheart   {A1}   [15 UP]
+  85: [15 UP] Martyr      {A1}   [14 UP]
+  86: [21 UP] Fire Knight        [21 UP]
+
+Boss Turn #6
+  87: [21 UP] Mikage      {B_A3} [21 UP]
+  88: [21 UP] Mithrala    {A2}   [20 UP]
+  89: [20 UP] Tomb Lord   {A1}   [17 UP]
+  90: [17 UP] Coldheart   {A1}   [13 UP]
+  91: [13 UP] Martyr      {A1}   [12 UP]
+  92: [12 UP] Mikage      {B_A2} [11 UP]
+  93: [21 UP] Fire Knight        [21 UP]
