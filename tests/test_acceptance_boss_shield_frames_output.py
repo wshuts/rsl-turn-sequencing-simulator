@@ -49,7 +49,8 @@ def test_acceptance_cli_consumes_skill_sequence_and_decrements_shield_from_datas
     # Contract: Coldheart A1 is 4 hits in dataset, so 21 -> 17 should appear on her row
     assert "Coldheart" in out
     assert "[21 UP]" in n
-    assert re.search(r"Coldheart( \([^)]+\))? \[17 UP\]", n), out
+    # Token format may evolve: allow none, (A1), or {A1}.
+    assert re.search(r"Coldheart( (\{[^}]+\}|\([^)]+\)))? \[17 UP\]", n), out
 
     # Boss row exists
     assert "Fire Knight" in out

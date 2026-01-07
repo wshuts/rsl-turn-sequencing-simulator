@@ -36,5 +36,6 @@ def test_acceptance_cli_renders_a_skill_token_on_actor_rows(capsys) -> None:
     out = capsys.readouterr().out
     n = _norm(out)
 
-    # Semantic assertion only: Mikage has a rendered parenthesized token on her row.
-    assert re.search(r"\bMikage\b.*\([^)]+\)", n), out
+    # Semantic assertion only: Mikage has a rendered skill token on her row.
+    # Format is intentionally flexible to allow future tweaks (e.g., {A1} vs (A1)).
+    assert re.search(r"\bMikage\b.*(\{[^}]+\}|\([^)]+\))", n), out

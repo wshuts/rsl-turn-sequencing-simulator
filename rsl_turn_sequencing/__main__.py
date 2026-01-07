@@ -138,7 +138,9 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
         labels: list[str] = []
         for row in frame.rows:
             tok = _skill_token_for_row(row)
-            labels.append(f"{row.actor} ({tok})" if tok else row.actor)
+            # Render consumed skill tokens in braces so they are visually distinct
+            # from turn-meter brackets.
+            labels.append(f"{row.actor} {{{tok}}}" if tok else row.actor)
 
         max_actor_len = max(len(label) for label in labels) if labels else 0
 
