@@ -4,12 +4,12 @@ Standing Working Agreement applies.
 
 Baseline:
 - Repository state: clean
-- Tests: 47 passing, 0 failing
+- Tests: 47 passing, 1 failing
 - Relevant files: rsl_turn_sequencing/engine.py
 
 Change Requested:
-- new test: verify no change to global battle clock given extra turn event
+- bring test_extra_turn_does_not_advance_global_battle_clock to passing
 
 Expected Delivery:
-- new test file with current pass/fail status
+- required changes to rsl_turn_sequencing source files
 
