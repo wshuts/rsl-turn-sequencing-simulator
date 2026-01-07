@@ -288,6 +288,38 @@ def _load_fk_dataset_hit_lookup() -> _ChampionHitLookup:
     )
 
 
+def _is_boss_turn_end_event(evt: object, boss_actor: str) -> bool:
+    """
+    Detect a boss TURN_END event for both dict-like and Event dataclass events.
+
+    In this repo baseline, sink.events contains Event objects with:
+      - evt.actor: str | None
+      - evt.type: EventType (enum) or str
+    """
+    # Event dataclass / object case
+    actor = getattr(evt, "actor", None)
+    etype = getattr(evt, "type", None)
+    if actor is not None or etype is not None:
+        if actor != boss_actor:
+            return False
+        # etype may be an Enum (EventType.TURN_END) or a string ("TURN_END")
+        if hasattr(etype, "value"):
+            return etype.value == "TURN_END"
+        return str(etype) == "TURN_END"
+
+    # Dict-like fallback (if you ever switch sinks)
+    if isinstance(evt, dict):
+        actor = evt.get("actor") or evt.get("winner") or evt.get("name")
+        if actor != boss_actor:
+            return False
+        etype = evt.get("type") or evt.get("event_type") or evt.get("kind")
+        if hasattr(etype, "value"):
+            return etype.value == "TURN_END"
+        return str(etype) == "TURN_END"
+
+    return False
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     chosen = sum(1 for v in [bool(args.demo), bool(args.battle), bool(args.input)] if v)
     if chosen != 1:
@@ -347,9 +379,29 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     sink = InMemoryEventSink()
 
+    boss_actor = str(args.boss_actor)
+    stop_after = args.stop_after_boss_turns
+    boss_turns_seen = 0
+
+    # We still honor --ticks as a safety cap.
     try:
         for _ in range(int(args.ticks)):
+            before_len = len(sink.events)
             step_tick(actors, event_sink=sink, hit_provider=hit_provider)
+
+            if stop_after is not None:
+                new_events = sink.events[before_len:]
+                # Count boss TURN_END events, because a Boss Turn Frame is only "complete"
+                # after the boss has ended its turn.
+                for evt in new_events:
+                    if _is_boss_turn_end_event(evt, boss_actor=boss_actor):
+                        boss_turns_seen += 1
+                        if boss_turns_seen >= int(stop_after):
+                            raise StopIteration
+
+    except StopIteration:
+        # Normal stop condition: boss has completed N turns.
+        pass
     except SkillSequenceExhaustedError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
@@ -359,7 +411,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     sys.stdout.write(
         _render_text_report(
-            boss_actor=str(args.boss_actor),
+            boss_actor=boss_actor,
             events=sink.events,
             row_index_start=args.row_index_start,
         )
@@ -384,13 +436,22 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--demo", action="store_true", help="Run the built-in deterministic demo roster.")
     run.add_argument("--battle", type=str, help="Run a battle spec JSON.")
     run.add_argument("--input", type=str, help="Render an existing event stream JSON.")
-    run.add_argument("--ticks", type=int, default=50, help="Number of ticks to simulate.")
+    run.add_argument("--ticks", type=int, default=50, help="Safety cap: max ticks to simulate.")
     run.add_argument("--boss-actor", type=str, default="Boss", help="Actor name used to close frames.")
     run.add_argument(
         "--row-index-start",
         type=int,
         default=None,
         help="Optional: prefix each printed actor row with an incrementing index starting at this value.",
+    )
+    run.add_argument(
+        "--stop-after-boss-turns",
+        type=int,
+        default=None,
+        help=(
+            "Stop the simulation immediately after the boss completes this many turns "
+            "(i.e., after the boss TURN_END of Boss Turn #N). Overrides tick-guessing."
+        ),
     )
     run.set_defaults(func=_cmd_run)
 
