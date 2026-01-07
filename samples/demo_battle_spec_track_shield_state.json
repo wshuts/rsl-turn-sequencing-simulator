@@ -2,7 +2,15 @@
   "boss": {
     "name": "Fire Knight",
     "shield_max": 21,
-    "speed": 250
+    "speed": 250,
+    "skill_sequence": [
+      "A2",
+      "A1",
+      "A1",
+      "A1",
+      "A1",
+      "A2"
+    ]
   },
   "champions": [
     {
