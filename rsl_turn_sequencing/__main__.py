@@ -123,14 +123,20 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
 
     for frame in frames:
         out.append(f"Boss Turn #{frame.boss_turn_index}")
+
+        # Determine padding width for actor names in this frame
+        max_actor_len = max(len(row.actor) for row in frame.rows)
+
         for row in frame.rows:
             pre = _fmt_shield(row.pre_shield)
             post = _fmt_shield(row.post_shield)
 
+            actor_padded = row.actor.ljust(max_actor_len)
+
             if row_idx is None:
-                out.append(f"  [{pre:<10s}] {row.actor} [{post}]")
+                out.append(f"  [{pre}] {actor_padded} [{post}]")
             else:
-                out.append(f"  {row_idx:>3d}: [{pre:<10s}] {row.actor} [{post}]")
+                out.append(f"  {row_idx}: [{pre}] {actor_padded} [{post}]")
                 row_idx += 1
 
         out.append("")
