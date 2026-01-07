@@ -6,32 +6,35 @@ from pathlib import Path
 from rsl_turn_sequencing.__main__ import main
 
 
-def test_acceptance_cli_prints_boss_frames_with_pre_post_shield_changes(tmp_path: Path, capsys) -> None:
+def test_acceptance_cli_consumes_skill_sequence_and_decrements_shield_from_dataset(tmp_path: Path, capsys) -> None:
     """
-    Acceptance test for the user-facing contract (v0):
+    Acceptance test for the user-facing contract (v1):
 
-    - CLI can run a minimal battle spec
-    - Output prints Boss Turn Frames
-    - Each turn row prints PRE and POST shield snapshots
-    - Non-boss actor turn can decrement shield (hit-counter semantics)
-    - Boss TURN_START resets shield to shield_max (PRE snapshot)
+    - Battle spec provides skill_sequence and sequence_policy=error_if_exhausted
+    - CLI consumes skills per actor turn
+    - CLI translates skill -> hits using committed FK dataset
+    - Boss shield decrements by hit-count before TURN_END snapshot
+    - Output prints Boss Turn Frames with PRE/POST shield values
     """
 
+    # Provide enough skills so we don't exhaust during a short run.
+    # We only assert on the first boss frame.
     battle = {
-        "boss": {"name": "Boss", "speed": 1500, "shield_max": 21},
+        "boss": {"name": "Fire Knight", "speed": 1500, "shield_max": 21},
         "actors": [
-            {"name": "A1", "speed": 2000},
+            {
+                "name": "Coldheart",
+                "speed": 2000,
+                "skill_sequence": ["A1"] * 20,
+            },
         ],
-        # v0 scripting hook: when an actor takes a turn, apply this many shield hits
-        "hits_by_actor": {
-            "A1": 3
-        },
+        "options": {"sequence_policy": "error_if_exhausted"},
     }
 
     battle_path = tmp_path / "battle.json"
     battle_path.write_text(json.dumps(battle), encoding="utf-8")
 
-    rc = main(["run", "--battle", str(battle_path), "--ticks", "5", "--boss-actor", "Boss"])
+    rc = main(["run", "--battle", str(battle_path), "--ticks", "10", "--boss-actor", "Fire Knight"])
     assert rc == 0
 
     out = capsys.readouterr().out
@@ -39,11 +42,9 @@ def test_acceptance_cli_prints_boss_frames_with_pre_post_shield_changes(tmp_path
     # Frame exists
     assert "Boss Turn #1" in out
 
-    # A1 row shows shield moving from 21 -> 18 within the frame
-    assert "A1" in out
-    assert "21 UP" in out
-    assert "18 UP" in out
+    # Coldheart row shows shield moving from 21 -> 17 (A1 is 4 hits in dataset)
+    assert "Coldheart" in out
+    assert "Coldheart [17 UP" in out or "Coldheart [17 UP]" in out, out
 
-    # Boss row shows shield reset to 21 UP at PRE (TURN_START)
-    assert "Boss" in out
-    assert "Boss [21 UP" in out or "] Boss [21 UP" in out, out
+    # Boss row exists
+    assert "Fire Knight" in out
