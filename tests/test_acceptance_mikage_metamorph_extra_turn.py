@@ -3,6 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from rsl_turn_sequencing.__main__ import main
+from rsl_turn_sequencing.engine import step_tick
+from rsl_turn_sequencing.event_sink import InMemoryEventSink
+from rsl_turn_sequencing.events import EventType
+from rsl_turn_sequencing.models import Actor
 
 
 def _extract_frame_actor_rows(*, out: str, boss_turn_index: int) -> list[str]:
@@ -98,3 +102,36 @@ def test_acceptance_mikage_metamorph_grants_an_immediate_extra_turn(capsys) -> N
         f"Next row:         {rows[idx + 1]}\n\n"
         + out
     )
+
+
+def test_extra_turn_preempts_fill_no_fill_complete_event_emitted() -> None:
+    """An extra turn must preempt global turn-meter fill.
+
+    Contract:
+      - When an actor has extra_turns > 0, step_tick() immediately grants that
+        actor a turn.
+      - No simultaneous fill occurs for any actor on that tick.
+
+    Observable proxy:
+      - No FILL_COMPLETE event is emitted.
+      - Other actors' turn meters do not increase.
+    """
+
+    mikage = Actor(name="Mikage", speed=100.0)
+    ally = Actor(name="Ally", speed=250.0)
+
+    # Seed meters so we'd notice if fill happened.
+    mikage.turn_meter = 1000.0
+    ally.turn_meter = 500.0
+
+    # Grant an extra turn.
+    mikage.extra_turns = 1
+
+    sink = InMemoryEventSink()
+    winner = step_tick([mikage, ally], event_sink=sink)
+
+    assert winner is mikage
+    assert ally.turn_meter == 500.0
+
+    # No fill event should be emitted on an extra-turn tick.
+    assert all(e.type != EventType.FILL_COMPLETE for e in sink.events)

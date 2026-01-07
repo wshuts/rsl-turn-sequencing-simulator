@@ -100,6 +100,37 @@ def _consume_next_skill(
     return skill_id
 
 
+def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id: str) -> None:
+    """Apply observer-faithful side effects for select skills.
+
+    The simulator is intentionally "observer-only" (no combat math), but some
+    skills affect turn sequencing directly. These side effects must be modeled
+    so turn order and CLI traces match real-battle expectations.
+
+    Currently implemented:
+      - Mikage Metamorph: grants an immediate extra turn.
+
+    Notes:
+      - We keep this narrowly scoped. Unknown skills do nothing.
+      - We match Mikage by display name used in the sample specs.
+      - We accept both narrated tokens (A_A4 / B_A4) and dataset key "METAMORPH".
+    """
+
+    if not skill_id:
+        return
+
+    a = (actor_name or "").strip().lower()
+    s = (skill_id or "").strip().upper()
+
+    if a in {"mikage", "lady mikage"} and s in {"A_A4", "B_A4", "METAMORPH"}:
+        actor = next((x for x in actors if x.name == actor_name), None)
+        if actor is None:
+            return
+        # Metamorph grants an immediate extra turn. The engine will preempt
+        # the next tick's fill when extra_turns > 0.
+        actor.extra_turns = int(getattr(actor, "extra_turns", 0)) + 1
+
+
 def _fmt_shield(snap: object | None) -> str:
     if snap is None:
         return "--"
@@ -408,6 +439,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
             )
             if skill_id:
                 sink.emit(EventType.SKILL_CONSUMED, actor=winner, skill_id=skill_id)
+                _apply_skill_side_effects(actors=actors, actor_name=winner, skill_id=skill_id)
                 hits = hits_lookup.hits_for(winner, skill_id)
             else:
                 hits = int(hits_by_actor.get(winner, 0))
