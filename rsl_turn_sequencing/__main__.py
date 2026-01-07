@@ -111,6 +111,16 @@ def _fmt_shield(snap: object | None) -> str:
 
 
 def _render_text_report(*, boss_actor: str, events, row_index_start: int | None = None) -> str:
+    from rsl_turn_sequencing.events import EventType
+
+    def _skill_token_for_row(row) -> str | None:
+        for e in row.events:
+            if e.type == EventType.SKILL_CONSUMED:
+                skill_id = e.data.get("skill_id")
+                if isinstance(skill_id, str) and skill_id.strip():
+                    return skill_id.strip()
+        return None
+
     rows = derive_turn_rows(events)
     frames = group_rows_into_boss_frames(rows, boss_actor=boss_actor)
 
@@ -124,14 +134,19 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
     for frame in frames:
         out.append(f"Boss Turn #{frame.boss_turn_index}")
 
-        # Determine padding width for actor names in this frame
-        max_actor_len = max(len(row.actor) for row in frame.rows)
-
+        # Determine padding width for actor labels (actor name + optional token) in this frame.
+        labels: list[str] = []
         for row in frame.rows:
+            tok = _skill_token_for_row(row)
+            labels.append(f"{row.actor} ({tok})" if tok else row.actor)
+
+        max_actor_len = max(len(label) for label in labels) if labels else 0
+
+        for row, label in zip(frame.rows, labels):
             pre = _fmt_shield(row.pre_shield)
             post = _fmt_shield(row.post_shield)
 
-            actor_padded = row.actor.ljust(max_actor_len)
+            actor_padded = label.ljust(max_actor_len)
 
             if row_idx is None:
                 out.append(f"  [{pre}] {actor_padded} [{post}]")
@@ -140,8 +155,8 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
                 row_idx += 1
 
         out.append("")
-    return "\n".join(out).rstrip() + "\n"
 
+    return "\n".join(out).rstrip() + "\n"
 
 
 def _load_hits_by_actor(path: Path) -> dict[str, int]:
@@ -347,6 +362,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
         )
         return 0
 
+    from rsl_turn_sequencing.events import EventType
+
+    sink = InMemoryEventSink()
+
     hit_provider: Callable[[str], dict[str, int]] | None = None
 
     if args.battle:
@@ -374,6 +393,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
                 sequence_policy=sequence_policy,
             )
             if skill_id:
+                sink.emit(EventType.SKILL_CONSUMED, actor=winner, skill_id=skill_id)
                 hits = hits_lookup.hits_for(winner, skill_id)
             else:
                 hits = int(hits_by_actor.get(winner, 0))
@@ -382,8 +402,6 @@ def _cmd_run(args: argparse.Namespace) -> int:
         hit_provider = _provider
     else:
         actors = _demo_actors()
-
-    sink = InMemoryEventSink()
 
     boss_actor = str(args.boss_actor)
     stop_after = args.stop_after_boss_turns

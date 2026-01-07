@@ -6,10 +6,7 @@ from typing import Any
 
 
 class EventType(str, Enum):
-    """
-    Minimal event vocabulary for the simulator "truth engine".
-    Keep this small; add types only when tests require them.
-    """
+    """Minimal event vocabulary for the simulator truth engine."""
 
     TICK_START = "TICK_START"
     FILL_COMPLETE = "FILL_COMPLETE"
@@ -20,14 +17,14 @@ class EventType(str, Enum):
     EFFECT_TRIGGERED = "EFFECT_TRIGGERED"
     EFFECT_EXPIRED = "EFFECT_EXPIRED"
 
+    # Emitted when an actor consumes a skill token from its skill_sequence.
+    # Must occur within TURN_START → TURN_END so it is preserved by derive_turn_rows().
+    SKILL_CONSUMED = "SKILL_CONSUMED"
+
 
 @dataclass(frozen=True, slots=True)
 class Event:
-    """
-    A structured, orderable fact emitted by the engine (optionally).
-
-    tick and seq are owned by the sink (so the engine remains stateless).
-    """
+    """A structured, orderable fact emitted by the engine (optionally)."""
 
     tick: int
     seq: int
