@@ -4,13 +4,12 @@ Standing Working Agreement applies.
 
 Baseline:
 - Repository state: clean
-- Tests: 45 passing, 1 failing
-- Relevant files: tests/test_acceptance_mikage_metamorph_extra_turn.py
+- Tests: 47 passing, 0 failing
+- Relevant files: rsl_turn_sequencing/engine.py
 
 Change Requested:
-- All tests passing
+- new test: verify no change to global battle clock given extra turn event
 
 Expected Delivery:
-- new passing test confirming no engine tick during extra turn
-- passing test_acceptance_mikage_metamorph_grants_an_immediate_extra_turn
-- verify: CLI output confirms presence of extra turn
+- new test file with current pass/fail status
+
