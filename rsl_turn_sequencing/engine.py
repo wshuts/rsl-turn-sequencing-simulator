@@ -26,6 +26,65 @@ def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
     return {"value": value, "status": status}
 
 
+def _emit_injected_expirations(
+    *,
+    event_sink: EventSink,
+    actors: list[Actor],
+    phase: EventType,
+    acting_actor: Actor,
+    acting_actor_index: int,
+    turn_counter: int,
+    expiration_injector: callable,
+) -> None:
+    """Dev-only DI seam: inject deterministic EFFECT_EXPIRED events inside a turn boundary.
+
+    Not wired to user BattleSpec/CLI input. Tests may pass expiration_injector to force
+    an expiration event at TURN_START or TURN_END.
+
+    Injector is called with a small context dict and should return a list of dict payloads:
+      {"target": "Mikage", "effect": "SomeEffect"}
+
+    "target" defaults to the acting actor if omitted.
+    """
+    injected = expiration_injector(
+        {
+            "phase": str(phase),
+            "acting_actor": acting_actor.name,
+            "acting_actor_index": int(acting_actor_index),
+            "turn_counter": int(turn_counter),
+            "tick": int(event_sink.current_tick),
+        }
+    ) or []
+
+    for item in injected:
+        if not isinstance(item, dict):
+            raise ValueError("Injected expiration must be a dict payload.")
+
+        target = item.get("target") or item.get("actor") or acting_actor.name
+        effect = item.get("effect")
+
+        if not isinstance(target, str) or not target.strip():
+            raise ValueError("Injected expiration requires non-empty 'target' (or 'actor').")
+        if not isinstance(effect, str) or not effect.strip():
+            raise ValueError("Injected expiration requires non-empty 'effect'.")
+
+        try:
+            target_index = next(i for i, a in enumerate(actors) if a.name == target)
+        except StopIteration as exc:
+            raise ValueError(f"Injected expiration target not found: {target!r}") from exc
+
+        event_sink.emit(
+            EventType.EFFECT_EXPIRED,
+            actor=target,
+            actor_index=target_index,
+            effect=str(effect),
+            injected=True,
+            phase=str(phase),
+            injected_turn_counter=int(turn_counter),
+            acting_actor=acting_actor.name,
+        )
+
+
 def step_tick(
         actors: list[Actor],
         event_sink: EventSink | None = None,
@@ -33,6 +92,7 @@ def step_tick(
         snapshot_capture: set[int] | None = None,
         hit_counts_by_actor: dict[str, int] | None = None,
         hit_provider: callable | None = None,
+        expiration_injector: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -86,6 +146,7 @@ def step_tick(
             a.turn_meter += eff_speed
 
         if event_sink is not None:
+            # IMPORTANT: contract expects "meters" key (tests depend on this).
             event_sink.emit(
                 EventType.FILL_COMPLETE,
                 meters=[
@@ -145,6 +206,23 @@ def step_tick(
             shield_max = getattr(best, "shield_max", None)
             if shield_max is not None:
                 best.shield = int(shield_max)
+
+        # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
+        # Includes extra turns (TURN_START emitted for each turn boundary).
+        turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
+        setattr(event_sink, "turn_counter", turn_counter)
+
+        # Slice 1: allow tests to inject expirations immediately before TURN_START.
+        if expiration_injector is not None:
+            _emit_injected_expirations(
+                event_sink=event_sink,
+                actors=actors,
+                phase=EventType.TURN_START,
+                acting_actor=best,
+                acting_actor_index=i_best,
+                turn_counter=turn_counter,
+                expiration_injector=expiration_injector,
+            )
 
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
@@ -254,6 +332,20 @@ def step_tick(
                     ],
                 },
             )
+
+        # Slice 1: allow tests to inject expirations immediately before TURN_END.
+        if expiration_injector is not None:
+            turn_counter = int(getattr(event_sink, "turn_counter", 0))
+            _emit_injected_expirations(
+                event_sink=event_sink,
+                actors=actors,
+                phase=EventType.TURN_END,
+                acting_actor=best,
+                acting_actor_index=i_best,
+                turn_counter=turn_counter,
+                expiration_injector=expiration_injector,
+            )
+
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
