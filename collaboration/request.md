@@ -4,12 +4,13 @@ Standing Working Agreement applies.
 
 Baseline:
 - Repository state: clean
-- Tests: 47 passing, 1 failing
-- Relevant files: rsl_turn_sequencing/engine.py
+- Tests: 48 passing, 0 failing
+- Relevant files: tests/test_acceptance_mikage_metamorph_extra_turn.py
 
 Change Requested:
-- bring test_extra_turn_does_not_advance_global_battle_clock to passing
+- create a new failing acceptance test
+- test should verify Mikage is 1st actor in Boss Turn #5 frame.
 
 Expected Delivery:
-- required changes to rsl_turn_sequencing source files
+- new failing test
 
