@@ -82,7 +82,7 @@
               "hits": 0,
               "trigger": "turn_start",
               "notes": [
-                "At the start of Mikage\u2019s turn, removes all debuffs from the ally with the highest ATK."
+                "At the start of Mikage’s turn, removes all debuffs from the ally with the highest ATK."
               ]
             }
           }
@@ -141,7 +141,7 @@
               "hits": 0,
               "trigger": "turn_start",
               "notes": [
-                "At the start of Mikage\u2019s turn, decreases the Turn Meter of the enemy with the highest ATK by 15%."
+                "At the start of Mikage’s turn, decreases the Turn Meter of the enemy with the highest ATK by 15%."
               ]
             }
           }
@@ -149,6 +149,22 @@
       },
       "defaults": {
         "starting_form": "base"
+      },
+      "masteries": {
+        "rapid_response": {
+          "enabled": true,
+          "effect_text": "Has a 30% chance of increasing the Turn Meter by 10% when a buff cast by this Champion is removed or expires.",
+          "modeling": {
+            "chance": 0.3,
+            "turn_meter_increase": 0.1,
+            "trigger": {
+              "when": "buff_removed_or_expired",
+              "requires": [
+                "buff_was_cast_by_mastery_holder"
+              ]
+            }
+          }
+        }
       }
     },
     {
@@ -191,8 +207,24 @@
           "hits": 0,
           "notes": [
             "When attacked by enemies under Hex, can apply Petrification.",
-            "Also increases Mithrala\u2019s RES based on her ACC."
+            "Also increases Mithrala’s RES based on her ACC."
           ]
+        }
+      },
+      "masteries": {
+        "arcane_celerity": {
+          "enabled": true,
+          "effect_text": "Has a 30% chance of increasing the Turn Meter by 10% when a debuff cast by this Champion is removed or expires.",
+          "modeling": {
+            "chance": 0.3,
+            "turn_meter_increase": 0.1,
+            "trigger": {
+              "when": "debuff_removed_or_expired",
+              "requires": [
+                "debuff_was_cast_by_mastery_holder"
+              ]
+            }
+          }
         }
       }
     },
