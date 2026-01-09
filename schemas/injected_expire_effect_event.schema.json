@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InjectedExpireEffectEvent",
+  "type": "object",
+  "required": ["type", "instance_id", "reason"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "expire_effect",
+      "description": "Injected request to forcibly expire an effect instance"
+    },
+    "instance_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier of the effect instance to expire"
+    },
+    "reason": {
+      "type": "string",
+      "const": "injected",
+      "description": "Explicitly marks this expiration as test-injected"
+    }
+  },
+  "additionalProperties": false
+}

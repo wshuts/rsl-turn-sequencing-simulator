@@ -1,21 +1,34 @@
 from rsl_turn_sequencing.engine import TM_GATE, step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.events import EventType
-from rsl_turn_sequencing.models import Actor
+from rsl_turn_sequencing.models import Actor, EffectInstance
 
 
-def test_can_inject_expiration_event_before_turn_start_within_turn_boundary() -> None:
+def test_can_inject_expire_effect_before_turn_start_within_turn_boundary() -> None:
     """
-    Slice 1 seam: inject an expiration event after winner is chosen,
+    Slice 1 seam: inject an expire_effect request after winner is chosen,
     immediately before TURN_START is emitted.
-    """
 
+    Contract:
+      - injector returns schema-shaped expire_effect request
+      - engine removes the instance from actor.active_effects
+      - engine emits EFFECT_EXPIRED with structured payload
+    """
     mikage = Actor("Mikage", 100.0)
     other = Actor("Other", 100.0)
 
-    # Ensure Mikage will win deterministically on the first call.
     mikage.turn_meter = TM_GATE
     other.turn_meter = 0.0
+
+    # Arrange: Mikage has an active BUFF instance we will expire
+    mikage.active_effects = [
+        EffectInstance(
+            instance_id="fx_test_01",
+            effect_id="test_buff",
+            effect_kind="BUFF",
+            placed_by="Mikage",
+        )
+    ]
 
     sink = InMemoryEventSink()
 
@@ -25,62 +38,74 @@ def test_can_inject_expiration_event_before_turn_start_within_turn_boundary() ->
             and ctx.get("acting_actor") == "Mikage"
             and ctx.get("turn_counter") == 1
         ):
-            return [{"target": "Mikage", "effect": "TEST_EFFECT"}]
+            return [
+                {
+                    "type": "expire_effect",
+                    "instance_id": "fx_test_01",
+                    "reason": "injected",
+                }
+            ]
         return []
 
     step_tick([mikage, other], event_sink=sink, expiration_injector=injector)
+
+    # Effect removed
+    assert mikage.active_effects == []
 
     injected = [
         e
         for e in sink.events
         if e.type == EventType.EFFECT_EXPIRED
         and e.actor == "Mikage"
-        and e.data.get("effect") == "TEST_EFFECT"
-        and e.data.get("injected") is True
+        and e.data.get("instance_id") == "fx_test_01"
+        and e.data.get("effect_id") == "test_buff"
+        and e.data.get("effect_kind") == "BUFF"
+        and e.data.get("owner") == "Mikage"
+        and e.data.get("placed_by") == "Mikage"
+        and e.data.get("reason") == "injected"
         and e.data.get("phase") == str(EventType.TURN_START)
         and e.data.get("injected_turn_counter") == 1
     ]
-    assert injected, "Expected an injected EFFECT_EXPIRED event for Mikage before TURN_START on turn 1."
+    assert injected, "Expected structured EFFECT_EXPIRED before TURN_START on turn 1."
 
 
 def test_injector_supports_extra_turn_boundaries_without_advancing_tick() -> None:
     """Slice 2: expiration injector supports extra-turn boundaries (TURN_START/TURN_END)
     without advancing the battle clock tick.
 
-    Scenario:
-      - Run one normal tick where Mikage wins (tick advances to 1).
-      - Grant Mikage an extra turn and call step_tick again.
-
     Contract:
-      - The extra turn produces a full TURN_START → TURN_END boundary.
-      - The expiration injector can inject at TURN_START and TURN_END for that extra turn.
-      - The extra turn MUST NOT advance the global tick (Event.tick remains the same).
+      - extra turn produces full TURN_START → TURN_END boundary
+      - injector can expire at TURN_START and TURN_END for the extra turn (turn_counter=2)
+      - extra turn MUST NOT advance global tick
     """
-
     mikage = Actor("Mikage", 100.0)
     other = Actor("Other", 100.0)
 
-    # Ensure Mikage wins deterministically on the first normal tick.
     mikage.turn_meter = TM_GATE
     other.turn_meter = 0.0
+
+    # Arrange: two instances so we can expire one at TURN_START and one at TURN_END
+    mikage.active_effects = [
+        EffectInstance("fx_extra_start", "extra_start_buff", "BUFF", placed_by="Mikage"),
+        EffectInstance("fx_extra_end", "extra_end_buff", "BUFF", placed_by="Mikage"),
+    ]
 
     sink = InMemoryEventSink()
 
     def injector(ctx: dict) -> list[dict]:
-        # Inject on the extra turn only (turn_counter==2), at both TURN_START and TURN_END.
         if (
             ctx.get("acting_actor") == "Mikage"
             and ctx.get("turn_counter") == 2
             and ctx.get("phase") == str(EventType.TURN_START)
         ):
-            return [{"target": "Mikage", "effect": "EXTRA_TURN_START"}]
+            return [{"type": "expire_effect", "instance_id": "fx_extra_start", "reason": "injected"}]
 
         if (
             ctx.get("acting_actor") == "Mikage"
             and ctx.get("turn_counter") == 2
             and ctx.get("phase") == str(EventType.TURN_END)
         ):
-            return [{"target": "Mikage", "effect": "EXTRA_TURN_END"}]
+            return [{"type": "expire_effect", "instance_id": "fx_extra_end", "reason": "injected"}]
 
         return []
 
@@ -96,32 +121,29 @@ def test_injector_supports_extra_turn_boundaries_without_advancing_tick() -> Non
     assert winner2 is mikage
     assert sink.current_tick == tick_after_normal
 
+    # Both instances should now be expired/removed
+    assert mikage.active_effects == []
+
     injected_start = [
         e
         for e in sink.events
         if e.type == EventType.EFFECT_EXPIRED
         and e.actor == "Mikage"
-        and e.data.get("effect") == "EXTRA_TURN_START"
-        and e.data.get("injected") is True
+        and e.data.get("instance_id") == "fx_extra_start"
         and e.data.get("phase") == str(EventType.TURN_START)
         and e.data.get("injected_turn_counter") == 2
         and e.tick == tick_after_normal
     ]
-    assert injected_start, (
-        "Expected an injected EFFECT_EXPIRED event before TURN_START on the extra turn (turn_counter=2)."
-    )
+    assert injected_start, "Expected EFFECT_EXPIRED at TURN_START on extra turn (turn_counter=2)."
 
     injected_end = [
         e
         for e in sink.events
         if e.type == EventType.EFFECT_EXPIRED
         and e.actor == "Mikage"
-        and e.data.get("effect") == "EXTRA_TURN_END"
-        and e.data.get("injected") is True
+        and e.data.get("instance_id") == "fx_extra_end"
         and e.data.get("phase") == str(EventType.TURN_END)
         and e.data.get("injected_turn_counter") == 2
         and e.tick == tick_after_normal
     ]
-    assert injected_end, (
-        "Expected an injected EFFECT_EXPIRED event before TURN_END on the extra turn (turn_counter=2)."
-    )
+    assert injected_end, "Expected EFFECT_EXPIRED at TURN_END on extra turn (turn_counter=2)."

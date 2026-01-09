@@ -4,6 +4,19 @@ from typing import Any
 from rsl_turn_sequencing.effects import Effect
 
 
+@dataclass(frozen=True)
+class EffectInstance:
+    """
+    Minimal representation of a buff/debuff instance on an actor.
+
+    This is intentionally small to support deterministic expiration seams.
+    """
+    instance_id: str
+    effect_id: str              # e.g., "shield", "increase_atk"
+    effect_kind: str            # e.g., "BUFF"
+    placed_by: str              # actor name who applied it
+
+
 @dataclass
 class Actor:
     name: str
@@ -52,3 +65,6 @@ class Actor:
     extra_turns: int = 0
 
     effects: list[Effect] = field(default_factory=list)
+
+    # NEW: Buff/debuff instances currently active on this actor (for injected expiration seam).
+    active_effects: list[EffectInstance] = field(default_factory=list)

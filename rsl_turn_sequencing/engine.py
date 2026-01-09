@@ -28,24 +28,14 @@ def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
 
 def _emit_injected_expirations(
     *,
-    event_sink: EventSink,
-    actors: list[Actor],
-    phase: EventType,
-    acting_actor: Actor,
+    event_sink: "EventSink",
+    actors: list["Actor"],
+    phase: "EventType",
+    acting_actor: "Actor",
     acting_actor_index: int,
     turn_counter: int,
     expiration_injector: callable,
 ) -> None:
-    """Dev-only DI seam: inject deterministic EFFECT_EXPIRED events inside a turn boundary.
-
-    Not wired to user BattleSpec/CLI input. Tests may pass expiration_injector to force
-    an expiration event at TURN_START or TURN_END.
-
-    Injector is called with a small context dict and should return a list of dict payloads:
-      {"target": "Mikage", "effect": "SomeEffect"}
-
-    "target" defaults to the acting actor if omitted.
-    """
     injected = expiration_injector(
         {
             "phase": str(phase),
@@ -60,14 +50,41 @@ def _emit_injected_expirations(
         if not isinstance(item, dict):
             raise ValueError("Injected expiration must be a dict payload.")
 
+        # --- New schema-backed path ---
+        if item.get("type") == "expire_effect" or "instance_id" in item or "reason" in item:
+            _validate_expire_effect_request(item)
+            instance_id = item["instance_id"]
+
+            owner, fx = _expire_effect_instance_by_id(actors=actors, instance_id=instance_id)
+            owner_index = next(i for i, a in enumerate(actors) if a is owner)
+
+            # Emit EFFECT_EXPIRED in a way that won't break existing consumers:
+            # keep existing fields you already emit, and ADD the new ones.
+            event_sink.emit(
+                EventType.EFFECT_EXPIRED,
+                actor=owner.name,
+                actor_index=owner_index,
+                # new structured fields:
+                instance_id=instance_id,
+                effect_id=getattr(fx, "effect_id", None),
+                effect_kind=getattr(fx, "effect_kind", None),
+                owner=owner.name,
+                placed_by=getattr(fx, "placed_by", None),
+                reason=item["reason"],
+                # preserve debug fields you already use:
+                phase=str(phase),
+                injected_turn_counter=int(turn_counter),
+                acting_actor=acting_actor.name,
+            )
+            continue
+
+        # --- Legacy path (deprecated) ---
         target = item.get("target") or item.get("actor") or acting_actor.name
         effect = item.get("effect")
-
         if not isinstance(target, str) or not target.strip():
             raise ValueError("Injected expiration requires non-empty 'target' (or 'actor').")
         if not isinstance(effect, str) or not effect.strip():
             raise ValueError("Injected expiration requires non-empty 'effect'.")
-
         try:
             target_index = next(i for i, a in enumerate(actors) if a.name == target)
         except StopIteration as exc:
@@ -83,6 +100,41 @@ def _emit_injected_expirations(
             injected_turn_counter=int(turn_counter),
             acting_actor=acting_actor.name,
         )
+
+
+def _validate_expire_effect_request(item: dict) -> None:
+    """
+    Manual enforcement of the minimal schema:
+      {"type":"expire_effect","instance_id":"...","reason":"injected"}
+    """
+    if item.get("type") != "expire_effect":
+        raise ValueError("expire_effect request requires type='expire_effect'.")
+    instance_id = item.get("instance_id")
+    if not isinstance(instance_id, str) or not instance_id.strip():
+        raise ValueError("expire_effect request requires non-empty 'instance_id' (string).")
+    if item.get("reason") != "injected":
+        raise ValueError("expire_effect request requires reason='injected'.")
+    allowed = {"type", "instance_id", "reason"}
+    extras = set(item.keys()) - allowed
+    if extras:
+        raise ValueError(f"expire_effect request has unexpected fields: {sorted(extras)}")
+
+
+def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
+    """
+    Locate and remove an EffectInstance by instance_id across all actors.
+
+    Returns (owner_actor, effect_instance).
+    """
+    for owner in actors:
+        active = getattr(owner, "active_effects", None)
+        if not active:
+            continue
+        for i, fx in enumerate(list(active)):
+            if getattr(fx, "instance_id", None) == instance_id:
+                active.pop(i)
+                return owner, fx
+    raise ValueError(f"Effect instance not found for instance_id={instance_id!r}")
 
 
 def step_tick(
