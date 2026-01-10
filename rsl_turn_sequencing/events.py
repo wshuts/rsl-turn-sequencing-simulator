@@ -17,6 +17,10 @@ class EventType(str, Enum):
     EFFECT_TRIGGERED = "EFFECT_TRIGGERED"
     EFFECT_EXPIRED = "EFFECT_EXPIRED"
 
+    # Emitted when a mastery is deterministically requested to proc.
+    # This is a control-plane event (proc dynamics only).
+    MASTERY_PROC = "MASTERY_PROC"
+
     # Emitted when an actor consumes a skill token from its skill_sequence.
     # Must occur within TURN_START → TURN_END so it is preserved by derive_turn_rows().
     SKILL_CONSUMED = "SKILL_CONSUMED"

@@ -35,6 +35,7 @@ def _emit_injected_expirations(
     acting_actor_index: int,
     turn_counter: int,
     expiration_injector: callable,
+    mastery_proc_requester: callable | None = None,
 ) -> None:
     injected = expiration_injector(
         {
@@ -76,6 +77,17 @@ def _emit_injected_expirations(
                 injected_turn_counter=int(turn_counter),
                 acting_actor=acting_actor.name,
             )
+
+            # Slice: Rapid Response (proc dynamics only)
+            # If a BUFF placed by Mikage expires and a deterministic proc request exists
+            # for this step (turn_counter), emit MASTERY_PROC with the requested payload.
+            if mastery_proc_requester is not None:
+                _maybe_emit_mastery_proc_for_expiration(
+                    event_sink=event_sink,
+                    turn_counter=turn_counter,
+                    expired_effect=fx,
+                    mastery_proc_requester=mastery_proc_requester,
+                )
             continue
 
         # --- Legacy path (deprecated) ---
@@ -137,6 +149,55 @@ def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
     raise ValueError(f"Effect instance not found for instance_id={instance_id!r}")
 
 
+def _maybe_emit_mastery_proc_for_expiration(
+    *,
+    event_sink: "EventSink",
+    turn_counter: int,
+    expired_effect: object,
+    mastery_proc_requester: callable,
+) -> None:
+    """Proc dynamics only.
+
+    When a BUFF placed by Mikage expires, consult the deterministic proc request
+    provider for this step (turn_counter). If a Rapid Response proc is requested,
+    emit a single MASTERY_PROC event with the requested payload.
+
+    The requester is expected to return a list of dicts like:
+      [{"holder":"Mikage","mastery":"rapid_response","count":1}, ...]
+    """
+
+    effect_kind = getattr(expired_effect, "effect_kind", None)
+    placed_by = getattr(expired_effect, "placed_by", None)
+    if effect_kind != "BUFF":
+        return
+    if placed_by != "Mikage":
+        return
+
+    requested = mastery_proc_requester({"turn_counter": int(turn_counter)}) or []
+    if not isinstance(requested, list):
+        raise ValueError("mastery_proc_requester must return a list of proc dicts")
+
+    for item in requested:
+        if not isinstance(item, dict):
+            raise ValueError("mastery proc request items must be dicts")
+        if item.get("holder") != "Mikage":
+            continue
+        if item.get("mastery") != "rapid_response":
+            continue
+        count = item.get("count")
+        if not isinstance(count, int) or count <= 0:
+            raise ValueError("mastery proc request requires positive int 'count'")
+
+        event_sink.emit(
+            EventType.MASTERY_PROC,
+            actor="Mikage",
+            holder="Mikage",
+            mastery="rapid_response",
+            count=int(count),
+            turn_counter=int(turn_counter),
+        )
+
+
 def step_tick(
         actors: list[Actor],
         event_sink: EventSink | None = None,
@@ -145,6 +206,7 @@ def step_tick(
         hit_counts_by_actor: dict[str, int] | None = None,
         hit_provider: callable | None = None,
         expiration_injector: callable | None = None,
+        mastery_proc_requester: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -274,6 +336,7 @@ def step_tick(
                 acting_actor_index=i_best,
                 turn_counter=turn_counter,
                 expiration_injector=expiration_injector,
+                mastery_proc_requester=mastery_proc_requester,
             )
 
         boss_shield = _boss_shield_snapshot(actors)
@@ -396,6 +459,7 @@ def step_tick(
                 acting_actor_index=i_best,
                 turn_counter=turn_counter,
                 expiration_injector=expiration_injector,
+                mastery_proc_requester=mastery_proc_requester,
             )
 
         boss_shield = _boss_shield_snapshot(actors)
