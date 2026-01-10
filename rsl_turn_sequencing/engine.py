@@ -84,6 +84,7 @@ def _emit_injected_expirations(
             if mastery_proc_requester is not None:
                 _maybe_emit_mastery_proc_for_expiration(
                     event_sink=event_sink,
+                    actors=actors,
                     turn_counter=turn_counter,
                     expired_effect=fx,
                     mastery_proc_requester=mastery_proc_requester,
@@ -149,9 +150,33 @@ def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
     raise ValueError(f"Effect instance not found for instance_id={instance_id!r}")
 
 
+
+def _apply_mastery_proc_effects(*, actors: list[Actor], holder: str, mastery: str, count: int) -> None:
+    """Effect plane (deterministic).
+
+    Slice: Rapid Response
+    - If the proc is Mikage's rapid_response, increase Mikage's turn meter by
+      TM_GATE * 0.10 per proc count.
+    """
+    if holder != "Mikage":
+        return
+    if mastery != "rapid_response":
+        return
+    if count <= 0:
+        return
+
+    try:
+        mikage = next(a for a in actors if a.name == "Mikage")
+    except StopIteration:
+        return
+
+    mikage.turn_meter += float(TM_GATE) * 0.10 * float(count)
+
+
 def _maybe_emit_mastery_proc_for_expiration(
     *,
     event_sink: "EventSink",
+    actors: list[Actor],
     turn_counter: int,
     expired_effect: object,
     mastery_proc_requester: callable,
@@ -195,6 +220,13 @@ def _maybe_emit_mastery_proc_for_expiration(
             mastery="rapid_response",
             count=int(count),
             turn_counter=int(turn_counter),
+        )
+
+        _apply_mastery_proc_effects(
+            actors=actors,
+            holder="Mikage",
+            mastery="rapid_response",
+            count=int(count),
         )
 
 
