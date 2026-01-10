@@ -100,7 +100,7 @@ def _consume_next_skill(
     return skill_id
 
 
-def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id: str) -> None:
+def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id: str, event_sink: InMemoryEventSink | None = None) -> None:
     """Apply observer-faithful side effects for select skills.
 
     The simulator is intentionally "observer-only" (no combat math), but some
@@ -109,6 +109,7 @@ def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id:
 
     Currently implemented:
       - Mikage Metamorph: grants an immediate extra turn.
+      - Slice 2: Mikage Base A3: places team buffs (Increase ATK, Increase C.DMG).
 
     Notes:
       - We keep this narrowly scoped. Unknown skills do nothing.
@@ -122,6 +123,7 @@ def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id:
     a = (actor_name or "").strip().lower()
     s = (skill_id or "").strip().upper()
 
+    # Mikage Metamorph -> immediate extra turn
     if a in {"mikage", "lady mikage"} and s in {"A_A4", "B_A4", "METAMORPH"}:
         actor = next((x for x in actors if x.name == actor_name), None)
         if actor is None:
@@ -129,6 +131,19 @@ def _apply_skill_side_effects(*, actors: list[Actor], actor_name: str, skill_id:
         # Metamorph grants an immediate extra turn. The engine will preempt
         # the next tick's fill when extra_turns > 0.
         actor.extra_turns = int(getattr(actor, "extra_turns", 0)) + 1
+        return
+
+    # Slice 2: deterministic BUFF placements (acceptance-driven).
+    # We do not model combat math here; only BUFF state materialization.
+    from rsl_turn_sequencing.skill_buffs import apply_skill_buffs
+
+    apply_skill_buffs(
+        actors=actors,
+        actor_name=actor_name,
+        skill_id=skill_id,
+        event_sink=event_sink,
+    )
+
 
 
 def _fmt_shield(snap: object | None) -> str:
@@ -439,7 +454,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
             )
             if skill_id:
                 sink.emit(EventType.SKILL_CONSUMED, actor=winner, skill_id=skill_id)
-                _apply_skill_side_effects(actors=actors, actor_name=winner, skill_id=skill_id)
+                _apply_skill_side_effects(actors=actors, actor_name=winner, skill_id=skill_id, event_sink=sink)
                 hits = hits_lookup.hits_for(winner, skill_id)
             else:
                 hits = int(hits_by_actor.get(winner, 0))

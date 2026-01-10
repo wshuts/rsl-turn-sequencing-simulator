@@ -15,6 +15,7 @@ class EventType(str, Enum):
     RESET_APPLIED = "RESET_APPLIED"
     TURN_END = "TURN_END"
     EFFECT_TRIGGERED = "EFFECT_TRIGGERED"
+    EFFECT_APPLIED = "EFFECT_APPLIED"
     EFFECT_EXPIRED = "EFFECT_EXPIRED"
 
     # Emitted when a mastery is deterministically requested to proc.
