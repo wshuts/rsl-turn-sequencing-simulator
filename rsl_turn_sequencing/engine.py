@@ -71,6 +71,7 @@ def _emit_injected_expirations(
                 effect_kind=getattr(fx, "effect_kind", None),
                 owner=owner.name,
                 placed_by=getattr(fx, "placed_by", None),
+                duration=getattr(fx, "duration", None),
                 reason=item["reason"],
                 # preserve debug fields you already use:
                 phase=str(phase),

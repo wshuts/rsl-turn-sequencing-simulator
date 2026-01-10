@@ -15,6 +15,9 @@ class EffectInstance:
     effect_id: str              # e.g., "shield", "increase_atk"
     effect_kind: str            # e.g., "BUFF"
     placed_by: str              # actor name who applied it
+    # Duration is an engine-owned counter. Units are intentionally undefined at this layer
+    # (turns, ticks, effect-specific counters, etc.).
+    duration: int = 0
 
 
 @dataclass

@@ -1,25 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from rsl_turn_sequencing.engine import TM_GATE, step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.events import EventType
-from rsl_turn_sequencing.models import Actor
-
-
-@dataclass(frozen=True)
-class EffectInstance:
-    """Test-local minimal BUFF effect instance (slice contract).
-
-    Production will likely move this into rsl_turn_sequencing.models.
-    """
-
-    instance_id: str
-    effect_id: str
-    effect_kind: str  # expected "BUFF" in this slice
-    owner: str
-    placed_by: str
+from rsl_turn_sequencing.models import Actor, EffectInstance
 
 
 def test_injected_expire_effect_by_instance_id_removes_buff_and_emits_payload() -> None:
@@ -48,8 +32,8 @@ def test_injected_expire_effect_by_instance_id_removes_buff_and_emits_payload() 
         instance_id="fx_mikage_shield_01",
         effect_id="shield",
         effect_kind="BUFF",
-        owner="Coldheart",
         placed_by="Mikage",
+        duration=2,
     )
 
     # Actor currently has no formal `active_effects` field; for this slice we attach it.
@@ -93,6 +77,7 @@ def test_injected_expire_effect_by_instance_id_removes_buff_and_emits_payload() 
         and e.data.get("effect_kind") == "BUFF"
         and e.data.get("owner") == "Coldheart"
         and e.data.get("placed_by") == "Mikage"
+        and e.data.get("duration") == 2
         and e.data.get("reason") == "injected"
     ]
 
