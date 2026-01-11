@@ -366,23 +366,7 @@ def step_tick(
             if shield_max is not None:
                 best.shield = int(shield_max)
 
-        # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
-        turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
-        setattr(event_sink, "turn_counter", turn_counter)
-
-        # Slice 1: allow tests to inject expirations immediately before TURN_START.
-        if expiration_injector is not None:
-            _emit_injected_expirations(
-                event_sink=event_sink,
-                actors=actors,
-                phase=EventType.TURN_START,
-                acting_actor=best,
-                acting_actor_index=i_best,
-                turn_counter=turn_counter,
-                expiration_injector=expiration_injector,
-                mastery_proc_requester=mastery_proc_requester,
-            )
-
+        # --- TURN_START bookmark should be emitted BEFORE TURN_START housekeeping/DI seams ---
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             if join_attack_joiners is None:
@@ -412,6 +396,24 @@ def step_tick(
                     boss_shield_status=boss_shield["status"],
                     join_attack_joiners=join_attack_joiners,
                 )
+
+        # TURN_START housekeeping (happens after TURN_START bookmark)
+        # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
+        turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
+        setattr(event_sink, "turn_counter", turn_counter)
+
+        # Slice 1: allow tests to inject expirations immediately AFTER TURN_START.
+        if expiration_injector is not None:
+            _emit_injected_expirations(
+                event_sink=event_sink,
+                actors=actors,
+                phase=EventType.TURN_START,
+                acting_actor=best,
+                acting_actor_index=i_best,
+                turn_counter=turn_counter,
+                expiration_injector=expiration_injector,
+                mastery_proc_requester=mastery_proc_requester,
+            )
 
     # TURN_START-triggered effects (A2): Poison triggers and decrements at TURN_START.
     remaining_start, expired_start, poison_dmg = apply_turn_start_effects(best.effects)
