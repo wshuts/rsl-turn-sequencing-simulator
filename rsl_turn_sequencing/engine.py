@@ -76,10 +76,16 @@ def _expire_active_effects_turn_end(
     actors: list[Actor],
     event_sink: EventSink,
     duration_before: dict[str, int],
+    turn_counter: int,
+    mastery_proc_requester: callable | None = None,
 ) -> None:
-    """Slice 4: Expire BUFF instances whose duration reached 0 at TURN_END.
+    """Slice 4/5: Expire BUFF instances whose duration reached 0 at TURN_END.
 
     Engine-owned expiration occurs BEFORE emitting the TURN_END bookmark.
+
+    Slice 5 bridge:
+      If a BUFF placed by Mikage expires AND a deterministic proc request exists
+      for this step (turn_counter), emit MASTERY_PROC with the requested payload.
     """
     current = list(getattr(owner, "active_effects", []) or [])
     if not current:
@@ -121,7 +127,15 @@ def _expire_active_effects_turn_end(
             phase=str(EventType.TURN_END),
         )
 
-        # Note: Mastery proc gating on engine-owned expiration is handled in Slice 5.
+        # Slice 5: mastery proc gating for engine-owned expirations.
+        if mastery_proc_requester is not None:
+            _maybe_emit_mastery_proc_for_expiration(
+                event_sink=event_sink,
+                actors=actors,
+                turn_counter=int(turn_counter),
+                expired_effect=fx,
+                mastery_proc_requester=mastery_proc_requester,
+            )
 
 
 
@@ -576,7 +590,10 @@ def step_tick(
             actors=actors,
             event_sink=event_sink,
             duration_before=duration_before,
+            turn_counter=int(turn_counter),
+            mastery_proc_requester=mastery_proc_requester,
         )
+
 
     remaining_end, expired_end = decrement_turn_end(best.effects)
     best.effects = remaining_end
