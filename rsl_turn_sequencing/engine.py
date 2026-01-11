@@ -26,24 +26,36 @@ def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
     return {"value": value, "status": status}
 
 
-def _decrement_active_effect_durations_turn_end(actor: Actor) -> None:
+def _decrement_active_effect_durations_turn_end(actor: Actor) -> dict[str, int]:
     """Slice 3: Decrement BUFF durations at the affected actor's TURN_END.
 
+    Returns a mapping of instance_id -> duration BEFORE decrement so callers can
+    emit useful expiration payloads in Slice 4.
+
     This updates `actor.active_effects` in-place by replacing frozen EffectInstances.
-    Expiration/removal is intentionally NOT performed here (Slice 4).
+    Expiration/removal is intentionally NOT performed here.
     """
     current = list(getattr(actor, "active_effects", []) or [])
     if not current:
-        return
+        return {}
 
+    duration_before: dict[str, int] = {}
     updated: list[EffectInstance] = []
+
     for fx in current:
+        iid = str(getattr(fx, "instance_id"))
+        d0 = int(getattr(fx, "duration", 0))
+        duration_before[iid] = d0
+
         # For now, only BUFF durations decrement at TURN_END.
+        # Duration semantics (current):
+        #   - duration <= 0 means "no engine-owned expiry" (indefinite)
+        #   - duration > 0 counts down to 0, then expires (Slice 4)
         if getattr(fx, "effect_kind", None) == "BUFF":
-            new_d = max(0, int(getattr(fx, "duration", 0)) - 1)
+            new_d = max(0, d0 - 1) if d0 > 0 else 0
             updated.append(
                 EffectInstance(
-                    instance_id=str(getattr(fx, "instance_id")),
+                    instance_id=iid,
                     effect_id=str(getattr(fx, "effect_id")),
                     effect_kind=str(getattr(fx, "effect_kind")),
                     placed_by=str(getattr(fx, "placed_by")),
@@ -54,6 +66,63 @@ def _decrement_active_effect_durations_turn_end(actor: Actor) -> None:
             updated.append(fx)
 
     actor.active_effects = updated
+    return duration_before
+
+
+def _expire_active_effects_turn_end(
+    *,
+    owner: Actor,
+    owner_index: int,
+    actors: list[Actor],
+    event_sink: EventSink,
+    duration_before: dict[str, int],
+) -> None:
+    """Slice 4: Expire BUFF instances whose duration reached 0 at TURN_END.
+
+    Engine-owned expiration occurs BEFORE emitting the TURN_END bookmark.
+    """
+    current = list(getattr(owner, "active_effects", []) or [])
+    if not current:
+        return
+
+    remaining: list[EffectInstance] = []
+    expired: list[EffectInstance] = []
+
+    for fx in current:
+        iid = str(getattr(fx, "instance_id"))
+        d0 = int(duration_before.get(iid, int(getattr(fx, "duration", 0))))
+        d1 = int(getattr(fx, "duration", 0))
+
+        # Expire only if this instance is using engine-owned duration tracking.
+        if getattr(fx, "effect_kind", None) == "BUFF" and d0 > 0 and d1 <= 0:
+            expired.append(fx)
+        else:
+            remaining.append(fx)
+
+    if not expired:
+        return
+
+    owner.active_effects = remaining
+
+    for fx in expired:
+        iid = str(getattr(fx, "instance_id"))
+        event_sink.emit(
+            EventType.EFFECT_EXPIRED,
+            actor=owner.name,
+            actor_index=int(owner_index),
+            instance_id=iid,
+            effect_id=getattr(fx, "effect_id", None),
+            effect_kind=getattr(fx, "effect_kind", None),
+            owner=owner.name,
+            placed_by=getattr(fx, "placed_by", None),
+            # Use duration BEFORE decrement for observability and consistency with injected expiration.
+            duration=int(duration_before.get(iid, int(getattr(fx, "duration", 0)))),
+            reason="duration_reached_zero",
+            phase=str(EventType.TURN_END),
+        )
+
+        # Note: Mastery proc gating on engine-owned expiration is handled in Slice 5.
+
 
 
 def _emit_injected_expirations(
@@ -497,7 +566,17 @@ def step_tick(
             )
 
     # END-OF-TURN semantics must happen BEFORE TURN_END bookmark.
-    _decrement_active_effect_durations_turn_end(best)
+    duration_before = _decrement_active_effect_durations_turn_end(best)
+
+    # Slice 4: Expire BUFF instances whose duration reached 0 (engine-owned).
+    if event_sink is not None and duration_before:
+        _expire_active_effects_turn_end(
+            owner=best,
+            owner_index=i_best,
+            actors=actors,
+            event_sink=event_sink,
+            duration_before=duration_before,
+        )
 
     remaining_end, expired_end = decrement_turn_end(best.effects)
     best.effects = remaining_end
