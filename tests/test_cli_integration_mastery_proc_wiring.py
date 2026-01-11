@@ -70,12 +70,14 @@ def test_cli_integration_user_proc_request_emits_mastery_proc_on_engine_buff_exp
                     "name": "Mikage",
                     "speed": 2000,
                     # Ensure Mikage uses Base A3 (B_A3) early to place the BUFFs.
-                    "skill_sequence": ["B_A3", "B_A1", "B_A1", "B_A1"],
+                    # IMPORTANT: provide a long sequence so we don't fail early due to
+                    # ally turn volume before the boss completes 4 turns.
+                    "skill_sequence": ["B_A3"] + ["B_A1"] * 60,
                 },
                 {
                     "name": "A1",
                     "speed": 1900,
-                    "skill_sequence": ["A_A1", "A_A1", "A_A1", "A_A1"],
+                    "skill_sequence": ["A_A1"] * 80,
                 },
             ],
             "options": {"sequence_policy": "error_if_exhausted"},

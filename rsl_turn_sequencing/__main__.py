@@ -13,6 +13,7 @@ from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.reporting import derive_turn_rows, group_rows_into_boss_frames
 from rsl_turn_sequencing.stream_io import (
     InputFormatError,
+    dump_event_stream,
     load_battle_spec,
     load_event_stream,
 )
@@ -401,6 +402,46 @@ def _is_boss_turn_end_event(evt: object, boss_actor: str) -> bool:
     return False
 
 
+def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
+    """Build a mastery_proc_requester callable from battle spec JSON (CLI surface)."""
+    try:
+        raw = json.loads(battle_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    turn_overrides = raw.get("turn_overrides")
+    if not isinstance(turn_overrides, dict):
+        return None
+    proc_request = turn_overrides.get("proc_request")
+    if not isinstance(proc_request, dict):
+        return None
+    on_step = proc_request.get("on_step")
+    if not isinstance(on_step, dict):
+        return None
+
+    normalized: dict[str, list[dict]] = {}
+    for k, v in on_step.items():
+        if not isinstance(v, dict):
+            continue
+        procs = v.get("mastery_procs", [])
+        if not isinstance(procs, list):
+            continue
+        normalized[str(k)] = [p for p in procs if isinstance(p, dict)]
+
+    def _requester(ctx: dict) -> list[dict]:
+        turn_counter = ctx.get("turn_counter")
+        try:
+            step = str(int(turn_counter))
+        except Exception:
+            return []
+        return list(normalized.get(step, []))
+
+    return _requester
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     chosen = sum(1 for v in [bool(args.demo), bool(args.battle), bool(args.input)] if v)
     if chosen != 1:
@@ -427,6 +468,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     sink = InMemoryEventSink()
 
     hit_provider: Callable[[str], dict[str, int]] | None = None
+    mastery_proc_requester = None
 
     if args.battle:
         battle_path = Path(str(args.battle))
@@ -434,6 +476,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
             spec = load_battle_spec(battle_path)
             actors = _actors_from_battle_spec(spec)
             hits_by_actor = _load_hits_by_actor(battle_path)  # legacy fallback
+            mastery_proc_requester = _build_mastery_proc_requester_from_battle_json(battle_path)
         except InputFormatError as e:
             print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
             return 2
@@ -472,7 +515,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
     try:
         for _ in range(int(args.ticks)):
             before_len = len(sink.events)
-            step_tick(actors, event_sink=sink, hit_provider=hit_provider)
+            step_tick(
+                actors,
+                event_sink=sink,
+                hit_provider=hit_provider,
+                mastery_proc_requester=mastery_proc_requester,
+            )
 
             if stop_after is not None:
                 new_events = sink.events[before_len:]
@@ -493,6 +541,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
     except InputFormatError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
+
+    if getattr(args, "events_out", None):
+        out_path = Path(str(args.events_out))
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(dump_event_stream(sink.events), indent=2), encoding="utf-8")
 
     sys.stdout.write(
         _render_text_report(
@@ -538,6 +591,16 @@ def build_parser() -> argparse.ArgumentParser:
             "(i.e., after the boss TURN_END of Boss Turn #N). Overrides tick-guessing."
         ),
     )
+    run.add_argument(
+        "--events-out",
+        type=str,
+        default=None,
+        help=(
+            "Optional: write the full event stream to this JSON path "
+            "(dumped as an array of {tick, seq, type, actor, data})."
+        ),
+    )
+
     run.set_defaults(func=_cmd_run)
 
     return parser
