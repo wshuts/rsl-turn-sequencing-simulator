@@ -7,7 +7,7 @@ from rsl_turn_sequencing.effects import (
 )
 from rsl_turn_sequencing.event_sink import EventSink
 from rsl_turn_sequencing.events import EventType
-from rsl_turn_sequencing.models import Actor
+from rsl_turn_sequencing.models import Actor, EffectInstance
 
 TM_GATE = 1430.0
 EPS = 1e-9
@@ -24,6 +24,36 @@ def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
     value = int(getattr(boss, "shield", 0))
     status = "UP" if value > 0 else "BROKEN"
     return {"value": value, "status": status}
+
+
+def _decrement_active_effect_durations_turn_end(actor: Actor) -> None:
+    """Slice 3: Decrement BUFF durations at the affected actor's TURN_END.
+
+    This updates `actor.active_effects` in-place by replacing frozen EffectInstances.
+    Expiration/removal is intentionally NOT performed here (Slice 4).
+    """
+    current = list(getattr(actor, "active_effects", []) or [])
+    if not current:
+        return
+
+    updated: list[EffectInstance] = []
+    for fx in current:
+        # For now, only BUFF durations decrement at TURN_END.
+        if getattr(fx, "effect_kind", None) == "BUFF":
+            new_d = max(0, int(getattr(fx, "duration", 0)) - 1)
+            updated.append(
+                EffectInstance(
+                    instance_id=str(getattr(fx, "instance_id")),
+                    effect_id=str(getattr(fx, "effect_id")),
+                    effect_kind=str(getattr(fx, "effect_kind")),
+                    placed_by=str(getattr(fx, "placed_by")),
+                    duration=int(new_d),
+                )
+            )
+        else:
+            updated.append(fx)
+
+    actor.active_effects = updated
 
 
 def _emit_injected_expirations(
@@ -90,88 +120,50 @@ def _emit_injected_expirations(
                     expired_effect=fx,
                     mastery_proc_requester=mastery_proc_requester,
                 )
-            continue
 
-        # --- Legacy path (deprecated) ---
-        target = item.get("target") or item.get("actor") or acting_actor.name
-        effect = item.get("effect")
-        if not isinstance(target, str) or not target.strip():
-            raise ValueError("Injected expiration requires non-empty 'target' (or 'actor').")
-        if not isinstance(effect, str) or not effect.strip():
-            raise ValueError("Injected expiration requires non-empty 'effect'.")
-        try:
-            target_index = next(i for i, a in enumerate(actors) if a.name == target)
-        except StopIteration as exc:
-            raise ValueError(f"Injected expiration target not found: {target!r}") from exc
-
-        event_sink.emit(
-            EventType.EFFECT_EXPIRED,
-            actor=target,
-            actor_index=target_index,
-            effect=str(effect),
-            injected=True,
-            phase=str(phase),
-            injected_turn_counter=int(turn_counter),
-            acting_actor=acting_actor.name,
-        )
+        else:
+            raise ValueError(
+                "Injected expiration item must use schema: "
+                "{'type':'expire_effect','instance_id':'...','reason':'injected'}"
+            )
 
 
 def _validate_expire_effect_request(item: dict) -> None:
     """
-    Manual enforcement of the minimal schema:
+    Schema:
       {"type":"expire_effect","instance_id":"...","reason":"injected"}
     """
     if item.get("type") != "expire_effect":
         raise ValueError("expire_effect request requires type='expire_effect'.")
+
     instance_id = item.get("instance_id")
     if not isinstance(instance_id, str) or not instance_id.strip():
         raise ValueError("expire_effect request requires non-empty 'instance_id' (string).")
-    if item.get("reason") != "injected":
+
+    reason = item.get("reason")
+    if reason != "injected":
         raise ValueError("expire_effect request requires reason='injected'.")
-    allowed = {"type", "instance_id", "reason"}
-    extras = set(item.keys()) - allowed
+
+    extras = set(item.keys()) - {"type", "instance_id", "reason"}
     if extras:
         raise ValueError(f"expire_effect request has unexpected fields: {sorted(extras)}")
 
 
 def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
     """
-    Locate and remove an EffectInstance by instance_id across all actors.
+    Remove a buff/debuff instance from whichever actor currently owns it.
 
-    Returns (owner_actor, effect_instance).
+    Returns: (owner_actor, expired_effect_instance)
     """
-    for owner in actors:
-        active = getattr(owner, "active_effects", None)
-        if not active:
+    for a in actors:
+        current = getattr(a, "active_effects", None)
+        if not current:
             continue
-        for i, fx in enumerate(list(active)):
+        for i, fx in enumerate(list(current)):
             if getattr(fx, "instance_id", None) == instance_id:
-                active.pop(i)
-                return owner, fx
-    raise ValueError(f"Effect instance not found for instance_id={instance_id!r}")
-
-
-
-def _apply_mastery_proc_effects(*, actors: list[Actor], holder: str, mastery: str, count: int) -> None:
-    """Effect plane (deterministic).
-
-    Slice: Rapid Response
-    - If the proc is Mikage's rapid_response, increase Mikage's turn meter by
-      TM_GATE * 0.10 per proc count.
-    """
-    if holder != "Mikage":
-        return
-    if mastery != "rapid_response":
-        return
-    if count <= 0:
-        return
-
-    try:
-        mikage = next(a for a in actors if a.name == "Mikage")
-    except StopIteration:
-        return
-
-    mikage.turn_meter += float(TM_GATE) * 0.10 * float(count)
+                removed = current.pop(i)
+                return a, removed
+    raise ValueError(f"Effect instance_id not found: {instance_id}")
 
 
 def _maybe_emit_mastery_proc_for_expiration(
@@ -186,12 +178,11 @@ def _maybe_emit_mastery_proc_for_expiration(
 
     When a BUFF placed by Mikage expires, consult the deterministic proc request
     provider for this step (turn_counter). If a Rapid Response proc is requested,
-    emit a single MASTERY_PROC event with the requested payload.
+    emit a MASTERY_PROC event with the requested payload.
 
     The requester is expected to return a list of dicts like:
       [{"holder":"Mikage","mastery":"rapid_response","count":1}, ...]
     """
-
     effect_kind = getattr(expired_effect, "effect_kind", None)
     placed_by = getattr(expired_effect, "placed_by", None)
     if effect_kind != "BUFF":
@@ -231,15 +222,40 @@ def _maybe_emit_mastery_proc_for_expiration(
         )
 
 
+def _apply_mastery_proc_effects(
+    *,
+    actors: list["Actor"],
+    holder: str,
+    mastery: str,
+    count: int,
+) -> None:
+    """
+    Effect-plane handler (minimal): apply deterministic effects for proc events.
+    """
+    if (holder or "").strip() != "Mikage":
+        return
+    if (mastery or "").strip() != "rapid_response":
+        return
+    if int(count) <= 0:
+        return
+
+    mikage = next((a for a in actors if a.name == "Mikage"), None)
+    if mikage is None:
+        return
+
+    # Rapid Response: +10% turn meter per proc count.
+    mikage.turn_meter += float(TM_GATE) * 0.10 * float(count)
+
+
 def step_tick(
-        actors: list[Actor],
-        event_sink: EventSink | None = None,
-        *,
-        snapshot_capture: set[int] | None = None,
-        hit_counts_by_actor: dict[str, int] | None = None,
-        hit_provider: callable | None = None,
-        expiration_injector: callable | None = None,
-        mastery_proc_requester: callable | None = None,
+    actors: list[Actor],
+    event_sink: EventSink | None = None,
+    *,
+    snapshot_capture: set[int] | None = None,
+    hit_counts_by_actor: dict[str, int] | None = None,
+    hit_provider: callable | None = None,
+    expiration_injector: callable | None = None,
+    mastery_proc_requester: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -288,9 +304,9 @@ def step_tick(
     if best is None:
         for a in actors:
             eff_speed = (
-                    float(a.speed)
-                    * float(a.speed_multiplier)
-                    * float(speed_multiplier_from_effects(a.effects))
+                float(a.speed)
+                * float(a.speed_multiplier)
+                * float(speed_multiplier_from_effects(a.effects))
             )
             a.turn_meter += eff_speed
 
@@ -340,8 +356,8 @@ def step_tick(
                 a.name
                 for a in actors
                 if (not a.is_boss)
-                   and (a is not best)
-                   and (getattr(a, "faction", None) == "Shadowkin")
+                and (a is not best)
+                and (getattr(a, "faction", None) == "Shadowkin")
             ]
 
         # Boss shield semantics (C1 deliverable):
@@ -443,9 +459,9 @@ def step_tick(
     # Optional snapshot capture at TURN_END (observer-only)
     if event_sink is not None:
         if (
-                snapshot_capture is not None
-                and event_sink.current_tick in snapshot_capture
-                and hasattr(event_sink, "capture_snapshot")
+            snapshot_capture is not None
+            and event_sink.current_tick in snapshot_capture
+            and hasattr(event_sink, "capture_snapshot")
         ):
             event_sink.capture_snapshot(
                 turn=event_sink.current_tick,
@@ -479,6 +495,8 @@ def step_tick(
             )
 
     # END-OF-TURN semantics must happen BEFORE TURN_END bookmark.
+    _decrement_active_effect_durations_turn_end(best)
+
     remaining_end, expired_end = decrement_turn_end(best.effects)
     best.effects = remaining_end
     if event_sink is not None:
