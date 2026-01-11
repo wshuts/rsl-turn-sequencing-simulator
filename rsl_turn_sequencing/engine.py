@@ -259,10 +259,15 @@ def step_tick(
     Extra turn contract:
     - Resolving an extra turn MUST NOT advance the global battle clock.
       (The EventSink tick counter is the observable proxy for that clock.)
+
+    Domain bookmark contract:
+    - TURN_START and TURN_END are bookmarks.
+    - All turn semantics (effects, housekeeping, expirations, procs) happen BETWEEN them.
+    - Therefore, end-of-turn duration decrement and any EFFECT_EXPIRED events must occur
+      BEFORE emitting TURN_END.
     """
 
     # 0) extra turn handling (no fill)
-    # If any actor has pending extra turns, grant the turn immediately.
     extra_candidates = [(i, a) for i, a in enumerate(actors) if int(a.extra_turns) > 0]
     if extra_candidates:
         i_best, best = extra_candidates[0]
@@ -274,9 +279,6 @@ def step_tick(
         is_extra_turn = False
 
     # 0.5) tick start
-    # Normal ticks advance the global clock. Extra turns do not.
-    # If the sink has never started a tick (tick==0), we must start one
-    # to satisfy the sink's contract before emitting any events.
     if event_sink is not None:
         if (not is_extra_turn) or (event_sink.current_tick <= 0):
             event_sink.start_tick()
@@ -293,7 +295,6 @@ def step_tick(
             a.turn_meter += eff_speed
 
         if event_sink is not None:
-            # IMPORTANT: contract expects "meters" key (tests depend on this).
             event_sink.emit(
                 EventType.FILL_COMPLETE,
                 meters=[
@@ -311,7 +312,6 @@ def step_tick(
             return None
 
         # 3) choose actor: highest TM, then speed, then list order
-        # Use index to make final tie-break stable
         indexed = list(enumerate(actors))
         ready_indexed = [(i, a) for (i, a) in indexed if a.turn_meter + EPS >= TM_GATE]
         i_best, best = max(
@@ -327,15 +327,13 @@ def step_tick(
             pre_reset_tm=float(best.turn_meter),
         )
 
-    # 4) act (for now, acting is just returning the actor) and reset TM to 0
+    # 4) reset TM to 0
     best.turn_meter = 0.0
 
     if event_sink is not None:
         event_sink.emit(EventType.RESET_APPLIED, actor=best.name, actor_index=i_best)
 
         # Observability hook (C1): faction-gated join-attack evaluation.
-        # For now, we only expose Mikage A1 joiners based on Shadowkin faction.
-        # This does not execute attacks or apply damage; it's trace-only semantics.
         join_attack_joiners: list[str] | None = None
         if best.name == "Mikage":
             join_attack_joiners = [
@@ -347,15 +345,12 @@ def step_tick(
             ]
 
         # Boss shield semantics (C1 deliverable):
-        # The boss shield resets to full at the start of the boss's own turn,
-        # before TURN_START is emitted.
         if bool(getattr(best, "is_boss", False)):
             shield_max = getattr(best, "shield_max", None)
             if shield_max is not None:
                 best.shield = int(shield_max)
 
         # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
-        # Includes extra turns (TURN_START emitted for each turn boundary).
         turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
         setattr(event_sink, "turn_counter", turn_counter)
 
@@ -428,13 +423,7 @@ def step_tick(
                 phase=EventType.TURN_START,
             )
 
-    # Boss shield hit-counter semantics (C2):
-    # Apply turn-caused hits before TURN_END snapshot.
-    #
-    # This supports:
-    #   - Single-actor hit injection (e.g., Coldheart A1)
-    #   - Multi-source hit injection within one turn (e.g., Mikage A3 team-ups)
-    #   - Non-actor hits such as reflect, keyed under "REFLECT"
+    # Boss shield hit-counter semantics (C2): Apply turn-caused hits before TURN_END snapshot.
     current_hits = None
     if hit_provider is not None:
         current_hits = hit_provider(best.name) or {}
@@ -443,22 +432,16 @@ def step_tick(
     if current_hits is not None:
         boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
         if boss is not None:
-            # Sum all "normal" hits injected for this turn (may involve multiple sources).
-            normal_hits = sum(
-                int(v)
-                for k, v in current_hits.items()
-                if k != "REFLECT"
-            )
+            normal_hits = sum(int(v) for k, v in current_hits.items() if k != "REFLECT")
             if normal_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - normal_hits)
 
-            # Reflect hits are allowed during boss turns (or any turn) and are modeled separately.
             reflect_hits = int(current_hits.get("REFLECT", 0))
             if reflect_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - reflect_hits)
 
+    # Optional snapshot capture at TURN_END (observer-only)
     if event_sink is not None:
-        # Optional snapshot capture at TURN_END (observer-only)
         if (
                 snapshot_capture is not None
                 and event_sink.current_tick in snapshot_capture
@@ -495,6 +478,18 @@ def step_tick(
                 mastery_proc_requester=mastery_proc_requester,
             )
 
+    # END-OF-TURN semantics must happen BEFORE TURN_END bookmark.
+    remaining_end, expired_end = decrement_turn_end(best.effects)
+    best.effects = remaining_end
+    if event_sink is not None:
+        for e in expired_end:
+            event_sink.emit(
+                EventType.EFFECT_EXPIRED,
+                actor=best.name,
+                actor_index=i_best,
+                effect=str(e.kind),
+            )
+
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
@@ -507,18 +502,6 @@ def step_tick(
                 boss_shield_status=boss_shield["status"],
             )
 
-    # Effect semantics (observer-faithful):
-    # - Duration decrements at TURN_END of the affected actor (including extra turns later).
-    remaining, expired = decrement_turn_end(best.effects)
-    best.effects = remaining
-    if event_sink is not None:
-        for e in expired:
-            event_sink.emit(
-                EventType.EFFECT_EXPIRED,
-                actor=best.name,
-                actor_index=i_best,
-                effect=str(e.kind),
-            )
     return best
 
 
