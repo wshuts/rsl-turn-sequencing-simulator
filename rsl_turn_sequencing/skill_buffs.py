@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Iterable
-
 from rsl_turn_sequencing.event_sink import EventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor, EffectInstance
@@ -44,6 +42,9 @@ def apply_skill_buffs(
     # is 1-based for the just-consumed skill.
     seq_index = int(getattr(actor, "skill_sequence_cursor", 0))
 
+    # Engine stamps this each time a turn is processed (even without an event sink).
+    applied_turn = int(getattr(actor, "_current_turn_counter", 0))
+
     # Allies: this simulator currently models a single allied team vs a boss.
     allies: list[Actor] = [a for a in actors if not getattr(a, "is_boss", False)]
 
@@ -56,6 +57,7 @@ def apply_skill_buffs(
                 effect_kind="BUFF",
                 placed_by=holder,
                 duration=2,
+                applied_turn=applied_turn,
             )
             target.active_effects.append(inst)
 

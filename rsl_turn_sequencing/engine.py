@@ -26,8 +26,12 @@ def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
     return {"value": value, "status": status}
 
 
-def _decrement_active_effect_durations_turn_end(actor: Actor) -> dict[str, int]:
+def _decrement_active_effect_durations_turn_end(actor: Actor, *, turn_counter: int) -> dict[str, int]:
     """Slice 3: Decrement BUFF durations at the affected actor's TURN_END.
+
+    Duration semantics (updated):
+      - BUFF duration must NOT decrement on the same turn it was applied.
+      - First eligible decrement is the next matching boundary after placement.
 
     Returns a mapping of instance_id -> duration BEFORE decrement so callers can
     emit useful expiration payloads in Slice 4.
@@ -47,12 +51,15 @@ def _decrement_active_effect_durations_turn_end(actor: Actor) -> dict[str, int]:
         d0 = int(getattr(fx, "duration", 0))
         duration_before[iid] = d0
 
-        # For now, only BUFF durations decrement at TURN_END.
-        # Duration semantics (current):
-        #   - duration <= 0 means "no engine-owned expiry" (indefinite)
-        #   - duration > 0 counts down to 0, then expires (Slice 4)
         if getattr(fx, "effect_kind", None) == "BUFF":
-            new_d = max(0, d0 - 1) if d0 > 0 else 0
+            applied_turn = int(getattr(fx, "applied_turn", 0))
+
+            # Skip decrement on placement turn.
+            if applied_turn == int(turn_counter):
+                new_d = d0
+            else:
+                new_d = max(0, d0 - 1) if d0 > 0 else 0
+
             updated.append(
                 EffectInstance(
                     instance_id=iid,
@@ -60,6 +67,7 @@ def _decrement_active_effect_durations_turn_end(actor: Actor) -> dict[str, int]:
                     effect_kind=str(getattr(fx, "effect_kind")),
                     placed_by=str(getattr(fx, "placed_by")),
                     duration=int(new_d),
+                    applied_turn=applied_turn,
                 )
             )
         else:
@@ -497,6 +505,17 @@ def step_tick(
                 expiration_injector=expiration_injector,
                 mastery_proc_requester=mastery_proc_requester,
             )
+    else:
+        # No event sink: we still need a stable per-battle turn counter for duration semantics.
+        # Store it on the first actor instance so it naturally resets per battle/test.
+        seed = actors[0] if actors else best
+        turn_counter = int(getattr(seed, "_turn_counter", 0)) + 1
+        setattr(seed, "_turn_counter", turn_counter)
+
+    # Stamp the current turn counter onto actors so provider helpers can read it
+    # when placing effect instances (e.g., apply_skill_buffs).
+    for a in actors:
+        setattr(a, "_current_turn_counter", int(turn_counter))
 
     # TURN_START-triggered effects (A2): Poison triggers and decrements at TURN_START.
     remaining_start, expired_start, poison_dmg = apply_turn_start_effects(best.effects)
@@ -567,20 +586,19 @@ def step_tick(
 
         # Slice 1: allow tests to inject expirations immediately before TURN_END.
         if expiration_injector is not None:
-            turn_counter = int(getattr(event_sink, "turn_counter", 0))
             _emit_injected_expirations(
                 event_sink=event_sink,
                 actors=actors,
                 phase=EventType.TURN_END,
                 acting_actor=best,
                 acting_actor_index=i_best,
-                turn_counter=turn_counter,
+                turn_counter=int(turn_counter),
                 expiration_injector=expiration_injector,
                 mastery_proc_requester=mastery_proc_requester,
             )
 
     # END-OF-TURN semantics must happen BEFORE TURN_END bookmark.
-    duration_before = _decrement_active_effect_durations_turn_end(best)
+    duration_before = _decrement_active_effect_durations_turn_end(best, turn_counter=int(turn_counter))
 
     # Slice 4: Expire BUFF instances whose duration reached 0 (engine-owned).
     if event_sink is not None and duration_before:
@@ -593,7 +611,6 @@ def step_tick(
             turn_counter=int(turn_counter),
             mastery_proc_requester=mastery_proc_requester,
         )
-
 
     remaining_end, expired_end = decrement_turn_end(best.effects)
     best.effects = remaining_end
