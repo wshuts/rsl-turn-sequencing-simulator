@@ -77,6 +77,51 @@ def _decrement_active_effect_durations_turn_end(actor: Actor, *, turn_counter: i
     return duration_before
 
 
+
+def _emit_effect_duration_changed_events(
+    *,
+    event_sink: EventSink,
+    owner: Actor,
+    duration_before: dict[str, int],
+    turn_counter: int,
+    boundary: str,
+    reason: str,
+) -> None:
+    """Emit EFFECT_DURATION_CHANGED for any EffectInstance on `owner` whose duration changed.
+
+    Designed to keep duration logic observable in CLI/event logs without tests needing
+    to infer duration from indirect behavior.
+    """
+    current = list(getattr(owner, "active_effects", []) or [])
+    if not current:
+        return
+
+    for fx in current:
+        if getattr(fx, "effect_kind", None) != "BUFF":
+            continue
+        iid = str(getattr(fx, "instance_id"))
+        d0 = int(duration_before.get(iid, int(getattr(fx, "duration", 0))))
+        d1 = int(getattr(fx, "duration", 0))
+        if d0 == d1:
+            continue
+
+        event_sink.emit(
+            EventType.EFFECT_DURATION_CHANGED,
+            actor=owner.name,
+            instance_id=iid,
+            effect_id=str(getattr(fx, "effect_id", "")),
+            effect_kind=str(getattr(fx, "effect_kind", "")),
+            owner=owner.name,
+            placed_by=str(getattr(fx, "placed_by", "")),
+            duration_before=d0,
+            duration_after=d1,
+            delta=d1 - d0,
+            reason=reason,
+            boundary=boundary,
+            turn_counter=int(turn_counter),
+        )
+
+
 def _expire_active_effects_turn_end(
     *,
     owner: Actor,
@@ -599,6 +644,16 @@ def step_tick(
 
     # END-OF-TURN semantics must happen BEFORE TURN_END bookmark.
     duration_before = _decrement_active_effect_durations_turn_end(best, turn_counter=int(turn_counter))
+    if event_sink is not None:
+        _emit_effect_duration_changed_events(
+            event_sink=event_sink,
+            owner=best,
+            duration_before=duration_before,
+            turn_counter=int(turn_counter),
+            boundary="turn_end",
+            reason="tick_decrement",
+        )
+
 
     # Slice 4: Expire BUFF instances whose duration reached 0 (engine-owned).
     if event_sink is not None and duration_before:

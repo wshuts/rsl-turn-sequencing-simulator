@@ -74,3 +74,16 @@ def apply_skill_buffs(
                     source_skill_id=s,
                     source_sequence_index=seq_index,
                 )
+
+                event_sink.emit(
+                    EventType.EFFECT_DURATION_SET,
+                    actor=holder,
+                    instance_id=inst.instance_id,
+                    effect_id=inst.effect_id,
+                    effect_kind=inst.effect_kind,
+                    owner=target.name,
+                    placed_by=inst.placed_by,
+                    duration=inst.duration,
+                    reason="initial_application",
+                    boundary="placement",
+                )
