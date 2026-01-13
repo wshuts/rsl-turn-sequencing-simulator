@@ -5,7 +5,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Any
 
 from rsl_turn_sequencing.engine import step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
@@ -402,6 +402,35 @@ def _is_boss_turn_end_event(evt: object, boss_actor: str) -> bool:
     return False
 
 
+class _MasteryProcRequester:
+    """Inspectable, callable mastery proc requester.
+
+    - Callable contract (engine): requester({"turn_counter": int}) -> list[dict]
+    - Introspection (tests/humans): steps(), mastery_procs_for_step(step)
+    """
+
+    def __init__(self, schedule: dict[int, list[dict[str, Any]]]):
+        self._schedule: dict[int, list[dict[str, Any]]] = schedule
+
+    def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]:
+        turn_counter = ctx.get("turn_counter")
+        try:
+            step = int(turn_counter)
+        except Exception:
+            return []
+        return list(self._schedule.get(step, []))
+
+    def steps(self) -> list[int]:
+        return sorted(self._schedule.keys())
+
+    def mastery_procs_for_step(self, step: int) -> list[dict[str, Any]]:
+        try:
+            s = int(step)
+        except Exception:
+            return []
+        return list(self._schedule.get(s, []))
+
+
 def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
     """Build a mastery_proc_requester callable from battle spec JSON (CLI surface)."""
     try:
@@ -412,9 +441,10 @@ def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
     if not isinstance(raw, dict):
         return None
 
-    normalized: dict[str, list[dict]] = {}
+    # Keyed by integer step, values are lists of proc request dicts.
+    schedule: dict[int, list[dict[str, Any]]] = {}
 
-    def _extract_on_step(container: object) -> dict | None:
+    def _extract_on_step(container: object) -> dict[str, Any] | None:
         if not isinstance(container, dict):
             return None
         turn_overrides = container.get("turn_overrides")
@@ -426,17 +456,25 @@ def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
         on_step = proc_request.get("on_step")
         if not isinstance(on_step, dict):
             return None
-        return on_step
+        return on_step  # keys: step (string/int), values: {mastery_procs:[...]}
 
-    def _merge_on_step(on_step: dict) -> None:
+    def _merge_on_step(on_step: dict[str, Any]) -> None:
         for k, v in on_step.items():
             if not isinstance(v, dict):
                 continue
             procs = v.get("mastery_procs", [])
             if not isinstance(procs, list):
                 continue
-            step = str(k)
-            normalized.setdefault(step, []).extend([p for p in procs if isinstance(p, dict)])
+            try:
+                step_i = int(k)
+            except Exception:
+                # Ignore non-numeric step keys rather than silently breaking the build.
+                continue
+
+            cleaned: list[dict[str, Any]] = [p for p in procs if isinstance(p, dict)]
+            if not cleaned:
+                continue
+            schedule.setdefault(step_i, []).extend(cleaned)
 
     # Optional back-compat: legacy root-level turn_overrides (don’t require it)
     root_on_step = _extract_on_step(raw)
@@ -457,18 +495,10 @@ def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
                 _merge_on_step(ch_on_step)
 
     # If nothing was found, treat as “no requester”
-    if not normalized:
+    if not schedule:
         return None
 
-    def _requester(ctx: dict) -> list[dict]:
-        turn_counter = ctx.get("turn_counter")
-        try:
-            step = str(int(turn_counter))
-        except Exception:
-            return []
-        return list(normalized.get(step, []))
-
-    return _requester
+    return _MasteryProcRequester(schedule)
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
