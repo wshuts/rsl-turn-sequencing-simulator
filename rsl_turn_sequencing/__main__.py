@@ -5,9 +5,9 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Any
+from typing import Callable
 
-from rsl_turn_sequencing.engine import step_tick
+from rsl_turn_sequencing.engine import run_ticks
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.reporting import derive_turn_rows, group_rows_into_boss_frames
@@ -402,108 +402,6 @@ def _is_boss_turn_end_event(evt: object, boss_actor: str) -> bool:
     return False
 
 
-class _MasteryProcRequester:
-    """Inspectable, callable mastery proc requester.
-
-    - Callable contract (engine): requester({"turn_counter": int}) -> list[dict]
-    - Introspection (tests/humans): steps(), mastery_procs_for_step(step)
-    """
-
-    def __init__(self, schedule: dict[int, list[dict[str, Any]]]):
-        self._schedule: dict[int, list[dict[str, Any]]] = schedule
-
-    def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]:
-        turn_counter = ctx.get("turn_counter")
-        try:
-            step = int(turn_counter)
-        except Exception:
-            return []
-        return list(self._schedule.get(step, []))
-
-    def steps(self) -> list[int]:
-        return sorted(self._schedule.keys())
-
-    def mastery_procs_for_step(self, step: int) -> list[dict[str, Any]]:
-        try:
-            s = int(step)
-        except Exception:
-            return []
-        return list(self._schedule.get(s, []))
-
-
-def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
-    """Build a mastery_proc_requester callable from battle spec JSON (CLI surface).
-
-    Contract:
-      - If the JSON is valid and yields a dict battle spec, ALWAYS return an inspectable requester.
-      - If no proc requests are declared, the requester simply returns [] for every step.
-      - If the JSON cannot be read/parsed, return None (so CLI can treat it as an input error).
-    """
-    try:
-        raw = json.loads(battle_path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-
-    if not isinstance(raw, dict):
-        return None
-
-    # Keyed by integer step, values are lists of proc request dicts.
-    schedule: dict[int, list[dict[str, Any]]] = {}
-
-    def _extract_on_step(container: object) -> dict[str, Any] | None:
-        if not isinstance(container, dict):
-            return None
-        turn_overrides = container.get("turn_overrides")
-        if not isinstance(turn_overrides, dict):
-            return None
-        proc_request = turn_overrides.get("proc_request")
-        if not isinstance(proc_request, dict):
-            return None
-        on_step = proc_request.get("on_step")
-        if not isinstance(on_step, dict):
-            return None
-        return on_step  # keys: step (string/int), values: {mastery_procs:[...]}
-
-    def _merge_on_step(on_step: dict[str, Any]) -> None:
-        for k, v in on_step.items():
-            if not isinstance(v, dict):
-                continue
-            procs = v.get("mastery_procs", [])
-            if not isinstance(procs, list):
-                continue
-            try:
-                step_i = int(k)
-            except Exception:
-                # Ignore non-numeric step keys rather than silently breaking the build.
-                continue
-
-            cleaned: list[dict[str, Any]] = [p for p in procs if isinstance(p, dict)]
-            if not cleaned:
-                continue
-            schedule.setdefault(step_i, []).extend(cleaned)
-
-    # Optional back-compat: legacy root-level turn_overrides (don’t require it)
-    root_on_step = _extract_on_step(raw)
-    if root_on_step is not None:
-        _merge_on_step(root_on_step)
-
-    # Canonical (demo) locations
-    boss = raw.get("boss")
-    boss_on_step = _extract_on_step(boss)
-    if boss_on_step is not None:
-        _merge_on_step(boss_on_step)
-
-    champions = raw.get("champions")
-    if isinstance(champions, list):
-        for ch in champions:
-            ch_on_step = _extract_on_step(ch)
-            if ch_on_step is not None:
-                _merge_on_step(ch_on_step)
-
-    # Always return an inspectable requester for a valid battle spec dict,
-    # even when no proc requests are declared.
-    return _MasteryProcRequester(schedule)
-
 
 def _cmd_run(args: argparse.Namespace) -> int:
     chosen = sum(1 for v in [bool(args.demo), bool(args.battle), bool(args.input)] if v)
@@ -531,7 +429,6 @@ def _cmd_run(args: argparse.Namespace) -> int:
     sink = InMemoryEventSink()
 
     hit_provider: Callable[[str], dict[str, int]] | None = None
-    mastery_proc_requester = None
 
     if args.battle:
         battle_path = Path(str(args.battle))
@@ -539,7 +436,6 @@ def _cmd_run(args: argparse.Namespace) -> int:
             spec = load_battle_spec(battle_path)
             actors = _actors_from_battle_spec(spec)
             hits_by_actor = _load_hits_by_actor(battle_path)  # legacy fallback
-            mastery_proc_requester = _build_mastery_proc_requester_from_battle_json(battle_path)
         except InputFormatError as e:
             print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
             return 2
@@ -572,32 +468,17 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     boss_actor = str(args.boss_actor)
     stop_after = args.stop_after_boss_turns
-    boss_turns_seen = 0
 
-    # We still honor --ticks as a safety cap.
     try:
-        for _ in range(int(args.ticks)):
-            before_len = len(sink.events)
-            step_tick(
-                actors,
-                event_sink=sink,
-                hit_provider=hit_provider,
-                mastery_proc_requester=mastery_proc_requester,
-            )
-
-            if stop_after is not None:
-                new_events = sink.events[before_len:]
-                # Count boss TURN_END events, because a Boss Turn Frame is only "complete"
-                # after the boss has ended its turn.
-                for evt in new_events:
-                    if _is_boss_turn_end_event(evt, boss_actor=boss_actor):
-                        boss_turns_seen += 1
-                        if boss_turns_seen >= int(stop_after):
-                            raise StopIteration
-
-    except StopIteration:
-        # Normal stop condition: boss has completed N turns.
-        pass
+        run_ticks(
+            actors=actors,
+            event_sink=sink,
+            ticks=int(args.ticks),
+            hit_provider=hit_provider,
+            battle_path_for_mastery_procs=Path(str(args.battle)) if args.battle else None,
+            stop_after_boss_turns=int(stop_after) if stop_after is not None else None,
+            boss_actor=boss_actor,
+        )
     except SkillSequenceExhaustedError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2

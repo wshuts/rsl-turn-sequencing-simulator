@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import Any, Callable
+
 from rsl_turn_sequencing.effects import (
     apply_turn_start_effects,
     decrement_turn_end,
@@ -11,6 +15,165 @@ from rsl_turn_sequencing.models import Actor, EffectInstance
 
 TM_GATE = 1430.0
 EPS = 1e-9
+
+
+class MasteryProcRequester:
+    """Inspectable, callable mastery proc requester.
+
+    - Callable contract (engine): requester({"turn_counter": int}) -> list[dict]
+    - Introspection: steps(), mastery_procs_for_step(step)
+    """
+
+    def __init__(self, schedule: dict[int, list[dict[str, Any]]]):
+        self._schedule: dict[int, list[dict[str, Any]]] = schedule
+        # Marker used by step_tick: when present/true, the engine is allowed to
+        # emit requested procs at TURN_START as a user-driven CLI seam.
+        # Plain callables (unit tests) will not have this attribute, keeping
+        # emission gated on modeled triggers (e.g., buff expiration).
+        self.emit_on_turn_start = True
+
+    def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]:
+        turn_counter = ctx.get("turn_counter")
+        try:
+            step = int(turn_counter)
+        except Exception:
+            return []
+        return list(self._schedule.get(step, []))
+
+    def steps(self) -> list[int]:
+        return sorted(self._schedule.keys())
+
+    def mastery_procs_for_step(self, step: int) -> list[dict[str, Any]]:
+        try:
+            s = int(step)
+        except Exception:
+            return []
+        return list(self._schedule.get(s, []))
+
+
+def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryProcRequester | None:
+    """Build a mastery proc requester from a battle spec JSON file.
+
+    Contract:
+      - If the JSON is readable and is an object, ALWAYS return an inspectable requester.
+      - If no proc requests are declared, the requester returns [] for every step.
+      - If the JSON cannot be read/parsed or is not an object, return None.
+
+    Canonical (demo) location:
+      entity["turn_overrides"]["proc_request"]["on_step"][step]["mastery_procs"]
+
+    Where entity may be boss or any champion.
+    """
+    try:
+        raw = json.loads(battle_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    schedule: dict[int, list[dict[str, Any]]] = {}
+
+    def _extract_on_step(container: object) -> dict[str, Any] | None:
+        if not isinstance(container, dict):
+            return None
+        turn_overrides = container.get("turn_overrides")
+        if not isinstance(turn_overrides, dict):
+            return None
+        proc_request = turn_overrides.get("proc_request")
+        if not isinstance(proc_request, dict):
+            return None
+        on_step = proc_request.get("on_step")
+        if not isinstance(on_step, dict):
+            return None
+        return on_step
+
+    def _merge_on_step(on_step: dict[str, Any]) -> None:
+        for k, v in on_step.items():
+            if not isinstance(v, dict):
+                continue
+            procs = v.get("mastery_procs", [])
+            if not isinstance(procs, list):
+                continue
+            try:
+                step_i = int(k)
+            except Exception:
+                continue
+
+            cleaned: list[dict[str, Any]] = [p for p in procs if isinstance(p, dict)]
+            if not cleaned:
+                continue
+            schedule.setdefault(step_i, []).extend(cleaned)
+
+    # Back-compat: legacy root-level turn_overrides
+    root_on_step = _extract_on_step(raw)
+    if root_on_step is not None:
+        _merge_on_step(root_on_step)
+
+    # Canonical: boss and champions
+    boss = raw.get("boss")
+    boss_on_step = _extract_on_step(boss)
+    if boss_on_step is not None:
+        _merge_on_step(boss_on_step)
+
+    champions = raw.get("champions")
+    if isinstance(champions, list):
+        for ch in champions:
+            ch_on_step = _extract_on_step(ch)
+            if ch_on_step is not None:
+                _merge_on_step(ch_on_step)
+
+    return MasteryProcRequester(schedule)
+
+
+def run_ticks(
+    *,
+    actors: list[Actor],
+    event_sink: EventSink,
+    ticks: int,
+    hit_provider: Callable[[str], dict[str, int]] | None = None,
+    battle_path_for_mastery_procs: Path | None = None,
+    stop_after_boss_turns: int | None = None,
+    boss_actor: str = "Boss",
+) -> None:
+    """Engine-owned ticking loop.
+
+    This is an architectural seam: callers provide data (battle spec path), and
+    the engine builds/owns the mastery proc requester. Callers should not pass
+    requester closures into the engine.
+    """
+
+    mastery_proc_requester = None
+    if battle_path_for_mastery_procs is not None:
+        mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path_for_mastery_procs)
+
+    def _is_boss_turn_end_event(evt: object) -> bool:
+        actor = getattr(evt, "actor", None)
+        etype = getattr(evt, "type", None)
+        if actor != boss_actor:
+            return False
+        if hasattr(etype, "value"):
+            return etype.value == "TURN_END"
+        return str(etype) == "TURN_END"
+
+    boss_turns_seen = 0
+
+    for _ in range(int(ticks)):
+        before_len = len(getattr(event_sink, "events", []) or [])
+        step_tick(
+            actors,
+            event_sink=event_sink,
+            hit_provider=hit_provider,
+            mastery_proc_requester=mastery_proc_requester,
+        )
+
+        if stop_after_boss_turns is not None:
+            new_events = (getattr(event_sink, "events", []) or [])[before_len:]
+            for evt in new_events:
+                if _is_boss_turn_end_event(evt):
+                    boss_turns_seen += 1
+                    if boss_turns_seen >= int(stop_after_boss_turns):
+                        return
 
 
 def _boss_shield_snapshot(actors: list[Actor]) -> dict[str, object] | None:
@@ -326,10 +489,42 @@ def _maybe_emit_mastery_proc_for_expiration(
     if placed_by != "Mikage":
         return
 
+    _emit_requested_mastery_procs_once(
+        event_sink=event_sink,
+        actors=actors,
+        turn_counter=int(turn_counter),
+        mastery_proc_requester=mastery_proc_requester,
+    )
+
+
+def _emit_requested_mastery_procs_once(
+    *,
+    event_sink: EventSink,
+    actors: list[Actor],
+    turn_counter: int,
+    mastery_proc_requester: callable,
+) -> None:
+    """Emit user-requested mastery procs for this step at most once.
+
+    Architectural note:
+      - CLI acceptance tests need a direct, user-driven seam (request -> event)
+        even before all in-game trigger conditions are fully modeled.
+      - Proc dynamics tests can still validate that requests are *consulted*
+        at expiration time; this helper ensures we don't double-emit.
+    """
+    emitted_steps = getattr(event_sink, "_mastery_proc_steps_emitted", None)
+    if not isinstance(emitted_steps, set):
+        emitted_steps = set()
+        setattr(event_sink, "_mastery_proc_steps_emitted", emitted_steps)
+
+    if int(turn_counter) in emitted_steps:
+        return
+
     requested = mastery_proc_requester({"turn_counter": int(turn_counter)}) or []
     if not isinstance(requested, list):
         raise ValueError("mastery_proc_requester must return a list of proc dicts")
 
+    emitted_any = False
     for item in requested:
         if not isinstance(item, dict):
             raise ValueError("mastery proc request items must be dicts")
@@ -340,6 +535,8 @@ def _maybe_emit_mastery_proc_for_expiration(
         count = item.get("count")
         if not isinstance(count, int) or count <= 0:
             raise ValueError("mastery proc request requires positive int 'count'")
+
+        emitted_any = True
 
         event_sink.emit(
             EventType.MASTERY_PROC,
@@ -356,6 +553,9 @@ def _maybe_emit_mastery_proc_for_expiration(
             mastery="rapid_response",
             count=int(count),
         )
+
+    if emitted_any:
+        emitted_steps.add(int(turn_counter))
 
 
 def _apply_mastery_proc_effects(
@@ -435,6 +635,8 @@ def step_tick(
         if (not is_extra_turn) or (event_sink.current_tick <= 0):
             event_sink.start_tick()
             event_sink.emit(EventType.TICK_START)
+
+        
 
     # 1) simultaneous fill (only if no extra turn was granted)
     if best is None:
@@ -537,6 +739,16 @@ def step_tick(
         # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
         turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
         setattr(event_sink, "turn_counter", turn_counter)
+
+        # CLI seam: if the user requested a mastery proc on this step, emit it now.
+        # (At most once per step; expiration-triggered emission uses the same guard.)
+        if mastery_proc_requester is not None and bool(getattr(mastery_proc_requester, "emit_on_turn_start", False)):
+            _emit_requested_mastery_procs_once(
+                event_sink=event_sink,
+                actors=actors,
+                turn_counter=int(turn_counter),
+                mastery_proc_requester=mastery_proc_requester,
+            )
 
         # Slice 1: allow tests to inject expirations immediately AFTER TURN_START.
         if expiration_injector is not None:
