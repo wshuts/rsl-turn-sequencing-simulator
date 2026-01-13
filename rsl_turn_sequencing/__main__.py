@@ -412,24 +412,53 @@ def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
     if not isinstance(raw, dict):
         return None
 
-    turn_overrides = raw.get("turn_overrides")
-    if not isinstance(turn_overrides, dict):
-        return None
-    proc_request = turn_overrides.get("proc_request")
-    if not isinstance(proc_request, dict):
-        return None
-    on_step = proc_request.get("on_step")
-    if not isinstance(on_step, dict):
-        return None
-
     normalized: dict[str, list[dict]] = {}
-    for k, v in on_step.items():
-        if not isinstance(v, dict):
-            continue
-        procs = v.get("mastery_procs", [])
-        if not isinstance(procs, list):
-            continue
-        normalized[str(k)] = [p for p in procs if isinstance(p, dict)]
+
+    def _extract_on_step(container: object) -> dict | None:
+        if not isinstance(container, dict):
+            return None
+        turn_overrides = container.get("turn_overrides")
+        if not isinstance(turn_overrides, dict):
+            return None
+        proc_request = turn_overrides.get("proc_request")
+        if not isinstance(proc_request, dict):
+            return None
+        on_step = proc_request.get("on_step")
+        if not isinstance(on_step, dict):
+            return None
+        return on_step
+
+    def _merge_on_step(on_step: dict) -> None:
+        for k, v in on_step.items():
+            if not isinstance(v, dict):
+                continue
+            procs = v.get("mastery_procs", [])
+            if not isinstance(procs, list):
+                continue
+            step = str(k)
+            normalized.setdefault(step, []).extend([p for p in procs if isinstance(p, dict)])
+
+    # Optional back-compat: legacy root-level turn_overrides (don’t require it)
+    root_on_step = _extract_on_step(raw)
+    if root_on_step is not None:
+        _merge_on_step(root_on_step)
+
+    # Canonical (demo) locations
+    boss = raw.get("boss")
+    boss_on_step = _extract_on_step(boss)
+    if boss_on_step is not None:
+        _merge_on_step(boss_on_step)
+
+    champions = raw.get("champions")
+    if isinstance(champions, list):
+        for ch in champions:
+            ch_on_step = _extract_on_step(ch)
+            if ch_on_step is not None:
+                _merge_on_step(ch_on_step)
+
+    # If nothing was found, treat as “no requester”
+    if not normalized:
+        return None
 
     def _requester(ctx: dict) -> list[dict]:
         turn_counter = ctx.get("turn_counter")

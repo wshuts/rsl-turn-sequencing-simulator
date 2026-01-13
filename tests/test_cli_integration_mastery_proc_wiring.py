@@ -44,8 +44,8 @@ def test_cli_integration_user_proc_request_emits_mastery_proc_on_engine_buff_exp
     Notes:
       - This test intentionally assumes new CLI plumbing:
           * --events-out <path> dumps sink.events to JSON (via stream_io.dump_event_stream)
-          * battle spec can include turn_overrides.proc_request.on_step[...] which
-            is wired into mastery_proc_requester.
+          * battle spec follows the demo shape: entity-scoped turn_overrides live under
+            boss and/or champions[i], not at the root.
       - Today, this is expected to FAIL (RED). We'll implement the CLI bridge next.
     """
     with tempfile.TemporaryDirectory() as td:
@@ -63,30 +63,34 @@ def test_cli_integration_user_proc_request_emits_mastery_proc_on_engine_buff_exp
                 ]
             }
 
+        mikage_turn_overrides = {
+            "proc_request": {
+                "on_step": on_step
+            }
+        }
+
         battle_spec = {
             "boss": {"name": "Boss", "speed": 1500, "shield_max": 21},
-            "actors": [
+            "champions": [
                 {
+                    "slot": 1,
                     "name": "Mikage",
                     "speed": 2000,
                     # Ensure Mikage uses Base A3 (B_A3) early to place the BUFFs.
                     # IMPORTANT: provide a long sequence so we don't fail early due to
                     # ally turn volume before the boss completes 4 turns.
                     "skill_sequence": ["B_A3"] + ["B_A1"] * 60,
+                    # Demo shape: entity-scoped turn_overrides belong on champions[i]
+                    "turn_overrides": mikage_turn_overrides,
                 },
                 {
+                    "slot": 2,
                     "name": "A1",
                     "speed": 1900,
                     "skill_sequence": ["A_A1"] * 80,
                 },
             ],
             "options": {"sequence_policy": "error_if_exhausted"},
-            # Proposed CLI integration surface for proc requests:
-            "turn_overrides": {
-                "proc_request": {
-                    "on_step": on_step
-                }
-            },
         }
 
         battle_path.write_text(json.dumps(battle_spec, indent=2), encoding="utf-8")
