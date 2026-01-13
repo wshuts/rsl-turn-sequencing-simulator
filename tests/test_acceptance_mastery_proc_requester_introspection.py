@@ -16,77 +16,110 @@ def _load_demo_battle_spec() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _inject_proc_request_for_mikage(spec: dict, *, step: int) -> None:
-    """Mutate spec in-place: attach an entity-scoped deterministic proc request under Mikage."""
+def _extract_expected_demo_mikage_proc_requests(spec: dict) -> tuple[int, list[dict]]:
+    """Pull the canonical, entity-scoped Mikage proc_request from the demo battlespec.
+
+    Returns:
+      (step, mastery_procs_list)
+
+    Raises AssertionError if the expected structure is not present (by design).
+    """
     champions = spec.get("champions")
     assert isinstance(champions, list), "demo battle spec must contain a champions array"
 
     mikage = next((c for c in champions if isinstance(c, dict) and c.get("name") == "Mikage"), None)
     assert isinstance(mikage, dict), "demo battle spec must include a Mikage champion entry"
 
-    turn_overrides = mikage.setdefault("turn_overrides", {})
-    assert isinstance(turn_overrides, dict)
+    turn_overrides = mikage.get("turn_overrides")
+    assert isinstance(turn_overrides, dict), "demo Mikage entry must include turn_overrides"
 
-    proc_request = turn_overrides.setdefault("proc_request", {})
-    assert isinstance(proc_request, dict)
+    proc_request = turn_overrides.get("proc_request")
+    assert isinstance(proc_request, dict), "demo Mikage turn_overrides must include proc_request"
 
-    on_step = proc_request.setdefault("on_step", {})
-    assert isinstance(on_step, dict)
+    on_step = proc_request.get("on_step")
+    assert isinstance(on_step, dict), "demo Mikage proc_request must include on_step"
 
-    on_step[str(step)] = {
-        "mastery_procs": [
-            {"holder": "Mikage", "mastery": "rapid_response", "count": 2},
-        ]
-    }
+    # Demo fixture currently uses a single step key like "6".
+    step_keys = list(on_step.keys())
+    assert step_keys, "demo Mikage on_step must include at least one step key"
+
+    # Use the first step in the fixture (stable enough for acceptance; if demo evolves,
+    # this still validates the builder against the fixture rather than hardcoding a number).
+    step_key = step_keys[0]
+    step_val = on_step[step_key]
+    assert isinstance(step_val, dict), "demo Mikage on_step[step] must be an object"
+
+    mastery_procs = step_val.get("mastery_procs")
+    assert isinstance(mastery_procs, list), "demo Mikage on_step[step].mastery_procs must be a list"
+
+    cleaned = [p for p in mastery_procs if isinstance(p, dict)]
+    assert cleaned, "demo Mikage mastery_procs must include at least one proc dict"
+
+    return int(step_key), cleaned
 
 
 def test_mastery_proc_requester_is_inspectable_and_matches_demo_shape() -> None:
-    """Acceptance: the requester built from the canonical demo battle spec must be inspectable.
-
-    Motivation:
-      The current implementation returns an opaque closure (functional/lazy), which is hard
-      for humans to debug. We want an object that is still callable by the engine, but also
-      exposes its normalized schedule for TDD/verification.
+    """Acceptance: requester built from canonical demo battlespec is inspectable and matches fixture contents.
 
     Contract (desired):
-      - builder returns a callable requester
+      - builder returns a callable requester (even if schedule is empty)
       - requester exposes:
           * steps() -> list[int]
           * mastery_procs_for_step(step: int) -> list[dict]
-      - the callable interface returns the same procs when invoked with ctx={'turn_counter': step}
-
-    This test intentionally uses the real CLI battle spec fixture as a base, then injects a
-    deterministic proc request under Mikage (entity-scoped), to avoid relying on whether
-    the fixture already contains proc requests.
+      - callable interface returns the same procs when invoked with ctx={'turn_counter': step}
+      - for the demo battlespec, requester must match the fixture’s entity-scoped Mikage proc_request
     """
-
     spec = _load_demo_battle_spec()
-    _inject_proc_request_for_mikage(spec, step=7)
+    expected_step, expected_procs = _extract_expected_demo_mikage_proc_requests(spec)
 
     with tempfile.TemporaryDirectory() as td:
-        battle_path = Path(td) / "battle_with_proc_request.json"
+        battle_path = Path(td) / "demo_battle_spec.json"
         battle_path.write_text(json.dumps(spec, indent=2), encoding="utf-8")
 
         requester = _build_mastery_proc_requester_from_battle_json(battle_path)
 
-    # Desired: callable requester
-    assert requester is not None, "Expected a requester when proc_request content is present."
+    assert requester is not None, "Expected a requester for any valid battle spec dict."
     assert callable(requester), "Requester must be callable (engine contract)."
 
-    # Desired: inspectable requester
     assert hasattr(requester, "steps"), "Requester must expose steps() for human inspection."
     assert hasattr(requester, "mastery_procs_for_step"), (
         "Requester must expose mastery_procs_for_step(step) for human inspection."
     )
 
     steps = requester.steps()  # type: ignore[attr-defined]
-    assert 7 in steps, f"Expected injected step 7 to be present in requester.steps(); got {steps!r}"
+    assert expected_step in steps, (
+        f"Expected demo fixture step {expected_step} to be present in requester.steps(); got {steps!r}"
+    )
 
-    expected = [{"holder": "Mikage", "mastery": "rapid_response", "count": 2}]
-    got = requester.mastery_procs_for_step(7)  # type: ignore[attr-defined]
-    assert got == expected, f"Expected procs_for_step(7) == {expected!r}, got {got!r}"
+    got = requester.mastery_procs_for_step(expected_step)  # type: ignore[attr-defined]
+    assert got == expected_procs, f"Expected procs_for_step({expected_step}) == {expected_procs!r}, got {got!r}"
 
-    got_via_call = requester({"turn_counter": 7})
-    assert got_via_call == expected, (
+    got_via_call = requester({"turn_counter": expected_step})
+    assert got_via_call == expected_procs, (
         "Callable requester must return the same normalized proc list as mastery_procs_for_step(step)."
     )
+
+
+def test_mastery_proc_requester_is_returned_even_when_no_proc_requests_exist() -> None:
+    """Acceptance: builder returns an inspectable, callable requester for valid JSON even with no proc_request."""
+    empty_spec = {
+        "boss": {"name": "Fire Knight"},
+        "champions": [{"name": "Mikage"}],
+        "options": {"sequence_policy": "by_actor_list"},
+    }
+
+    with tempfile.TemporaryDirectory() as td:
+        battle_path = Path(td) / "battle_no_proc_request.json"
+        battle_path.write_text(json.dumps(empty_spec, indent=2), encoding="utf-8")
+
+        requester = _build_mastery_proc_requester_from_battle_json(battle_path)
+
+    assert requester is not None, "Expected a requester even when no proc requests are declared."
+    assert callable(requester)
+
+    assert hasattr(requester, "steps")
+    assert hasattr(requester, "mastery_procs_for_step")
+
+    assert requester.steps() == []  # type: ignore[attr-defined]
+    assert requester.mastery_procs_for_step(1) == []  # type: ignore[attr-defined]
+    assert requester({"turn_counter": 1}) == []

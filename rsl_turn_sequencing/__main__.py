@@ -432,7 +432,13 @@ class _MasteryProcRequester:
 
 
 def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
-    """Build a mastery_proc_requester callable from battle spec JSON (CLI surface)."""
+    """Build a mastery_proc_requester callable from battle spec JSON (CLI surface).
+
+    Contract:
+      - If the JSON is valid and yields a dict battle spec, ALWAYS return an inspectable requester.
+      - If no proc requests are declared, the requester simply returns [] for every step.
+      - If the JSON cannot be read/parsed, return None (so CLI can treat it as an input error).
+    """
     try:
         raw = json.loads(battle_path.read_text(encoding="utf-8"))
     except Exception:
@@ -494,10 +500,8 @@ def _build_mastery_proc_requester_from_battle_json(battle_path: Path):
             if ch_on_step is not None:
                 _merge_on_step(ch_on_step)
 
-    # If nothing was found, treat as “no requester”
-    if not schedule:
-        return None
-
+    # Always return an inspectable requester for a valid battle spec dict,
+    # even when no proc requests are declared.
     return _MasteryProcRequester(schedule)
 
 
