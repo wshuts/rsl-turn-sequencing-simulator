@@ -511,6 +511,30 @@
   {
     "tick": 8,
     "seq": 6,
+    "type": "MASTERY_PROC",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "count": 2,
+      "turn_counter": 4
+    }
+  },
+  {
+    "tick": 8,
+    "seq": 7,
+    "type": "MASTERY_PROC",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "count": 1,
+      "turn_counter": 4
+    }
+  },
+  {
+    "tick": 8,
+    "seq": 8,
     "type": "SKILL_CONSUMED",
     "actor": "Coldheart",
     "data": {
@@ -519,7 +543,7 @@
   },
   {
     "tick": 8,
-    "seq": 7,
+    "seq": 9,
     "type": "TURN_END",
     "actor": "Coldheart",
     "data": {
@@ -544,7 +568,7 @@
       "meters": [
         {
           "name": "Mikage",
-          "turn_meter": 1360.0
+          "turn_meter": 1789.0
         },
         {
           "name": "Mithrala",
@@ -635,7 +659,7 @@
       "meters": [
         {
           "name": "Mikage",
-          "turn_meter": 1700.0
+          "turn_meter": 2129.0
         },
         {
           "name": "Mithrala",
@@ -693,6 +717,18 @@
   {
     "tick": 10,
     "seq": 6,
+    "type": "MASTERY_PROC",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "count": 1,
+      "turn_counter": 6
+    }
+  },
+  {
+    "tick": 10,
+    "seq": 7,
     "type": "SKILL_CONSUMED",
     "actor": "Fire Knight",
     "data": {
@@ -701,7 +737,7 @@
   },
   {
     "tick": 10,
-    "seq": 7,
+    "seq": 8,
     "type": "TURN_END",
     "actor": "Fire Knight",
     "data": {
@@ -726,7 +762,7 @@
       "meters": [
         {
           "name": "Mikage",
-          "turn_meter": 2040.0
+          "turn_meter": 2612.0
         },
         {
           "name": "Mithrala",
@@ -758,7 +794,7 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "pre_reset_tm": 2040.0
+      "pre_reset_tm": 2612.0
     }
   },
   {
@@ -785,6 +821,18 @@
   {
     "tick": 11,
     "seq": 6,
+    "type": "MASTERY_PROC",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "count": 1,
+      "turn_counter": 7
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 7,
     "type": "SKILL_CONSUMED",
     "actor": "Mikage",
     "data": {
@@ -793,7 +841,7 @@
   },
   {
     "tick": 11,
-    "seq": 7,
+    "seq": 8,
     "type": "TURN_END",
     "actor": "Mikage",
     "data": {
@@ -804,17 +852,17 @@
   },
   {
     "tick": 11,
-    "seq": 8,
+    "seq": 9,
     "type": "WINNER_SELECTED",
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "pre_reset_tm": 0.0
+      "pre_reset_tm": 143.0
     }
   },
   {
     "tick": 11,
-    "seq": 9,
+    "seq": 10,
     "type": "RESET_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -823,7 +871,7 @@
   },
   {
     "tick": 11,
-    "seq": 10,
+    "seq": 11,
     "type": "TURN_START",
     "actor": "Mikage",
     "data": {
@@ -835,7 +883,7 @@
   },
   {
     "tick": 11,
-    "seq": 11,
+    "seq": 12,
     "type": "SKILL_CONSUMED",
     "actor": "Mikage",
     "data": {
@@ -844,7 +892,7 @@
   },
   {
     "tick": 11,
-    "seq": 12,
+    "seq": 13,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -856,43 +904,43 @@
       "duration": 2,
       "source_skill_id": "B_A3",
       "source_sequence_index": 3
-    }
-  },
-  {
-    "tick": 11,
-    "seq": 13,
-    "type": "EFFECT_DURATION_SET",
-    "actor": "Mikage",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Mikage_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Mikage",
-      "placed_by": "Mikage",
-      "duration": 2,
-      "reason": "initial_application",
-      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 14,
-    "type": "EFFECT_APPLIED",
+    "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Mikage_increase_c_dmg",
-      "effect_id": "increase_c_dmg",
+      "instance_id": "fx_Mikage_B_A3_3_Mikage_increase_atk",
+      "effect_id": "increase_atk",
       "effect_kind": "BUFF",
       "owner": "Mikage",
       "placed_by": "Mikage",
       "duration": 2,
-      "source_skill_id": "B_A3",
-      "source_sequence_index": 3
+      "reason": "initial_application",
+      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 15,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_3_Mikage_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mikage",
+      "placed_by": "Mikage",
+      "duration": 2,
+      "source_skill_id": "B_A3",
+      "source_sequence_index": 3
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 16,
     "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
@@ -908,7 +956,7 @@
   },
   {
     "tick": 11,
-    "seq": 16,
+    "seq": 17,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -920,43 +968,43 @@
       "duration": 2,
       "source_skill_id": "B_A3",
       "source_sequence_index": 3
-    }
-  },
-  {
-    "tick": 11,
-    "seq": 17,
-    "type": "EFFECT_DURATION_SET",
-    "actor": "Mikage",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Mithrala_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Mithrala",
-      "placed_by": "Mikage",
-      "duration": 2,
-      "reason": "initial_application",
-      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 18,
-    "type": "EFFECT_APPLIED",
+    "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Mithrala_increase_c_dmg",
-      "effect_id": "increase_c_dmg",
+      "instance_id": "fx_Mikage_B_A3_3_Mithrala_increase_atk",
+      "effect_id": "increase_atk",
       "effect_kind": "BUFF",
       "owner": "Mithrala",
       "placed_by": "Mikage",
       "duration": 2,
-      "source_skill_id": "B_A3",
-      "source_sequence_index": 3
+      "reason": "initial_application",
+      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 19,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_3_Mithrala_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Mikage",
+      "duration": 2,
+      "source_skill_id": "B_A3",
+      "source_sequence_index": 3
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 20,
     "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
@@ -972,7 +1020,7 @@
   },
   {
     "tick": 11,
-    "seq": 20,
+    "seq": 21,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -984,43 +1032,43 @@
       "duration": 2,
       "source_skill_id": "B_A3",
       "source_sequence_index": 3
-    }
-  },
-  {
-    "tick": 11,
-    "seq": 21,
-    "type": "EFFECT_DURATION_SET",
-    "actor": "Mikage",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Martyr_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Martyr",
-      "placed_by": "Mikage",
-      "duration": 2,
-      "reason": "initial_application",
-      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 22,
-    "type": "EFFECT_APPLIED",
+    "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Martyr_increase_c_dmg",
-      "effect_id": "increase_c_dmg",
+      "instance_id": "fx_Mikage_B_A3_3_Martyr_increase_atk",
+      "effect_id": "increase_atk",
       "effect_kind": "BUFF",
       "owner": "Martyr",
       "placed_by": "Mikage",
       "duration": 2,
-      "source_skill_id": "B_A3",
-      "source_sequence_index": 3
+      "reason": "initial_application",
+      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 23,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_3_Martyr_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Martyr",
+      "placed_by": "Mikage",
+      "duration": 2,
+      "source_skill_id": "B_A3",
+      "source_sequence_index": 3
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 24,
     "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
@@ -1036,7 +1084,7 @@
   },
   {
     "tick": 11,
-    "seq": 24,
+    "seq": 25,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -1048,43 +1096,43 @@
       "duration": 2,
       "source_skill_id": "B_A3",
       "source_sequence_index": 3
-    }
-  },
-  {
-    "tick": 11,
-    "seq": 25,
-    "type": "EFFECT_DURATION_SET",
-    "actor": "Mikage",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Tomb Lord_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Tomb Lord",
-      "placed_by": "Mikage",
-      "duration": 2,
-      "reason": "initial_application",
-      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 26,
-    "type": "EFFECT_APPLIED",
+    "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Tomb Lord_increase_c_dmg",
-      "effect_id": "increase_c_dmg",
+      "instance_id": "fx_Mikage_B_A3_3_Tomb Lord_increase_atk",
+      "effect_id": "increase_atk",
       "effect_kind": "BUFF",
       "owner": "Tomb Lord",
       "placed_by": "Mikage",
       "duration": 2,
-      "source_skill_id": "B_A3",
-      "source_sequence_index": 3
+      "reason": "initial_application",
+      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 27,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_3_Tomb Lord_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Mikage",
+      "duration": 2,
+      "source_skill_id": "B_A3",
+      "source_sequence_index": 3
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 28,
     "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
@@ -1100,7 +1148,7 @@
   },
   {
     "tick": 11,
-    "seq": 28,
+    "seq": 29,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -1112,27 +1160,27 @@
       "duration": 2,
       "source_skill_id": "B_A3",
       "source_sequence_index": 3
-    }
-  },
-  {
-    "tick": 11,
-    "seq": 29,
-    "type": "EFFECT_DURATION_SET",
-    "actor": "Mikage",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_3_Coldheart_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Coldheart",
-      "placed_by": "Mikage",
-      "duration": 2,
-      "reason": "initial_application",
-      "boundary": "placement"
     }
   },
   {
     "tick": 11,
     "seq": 30,
+    "type": "EFFECT_DURATION_SET",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_3_Coldheart_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration": 2,
+      "reason": "initial_application",
+      "boundary": "placement"
+    }
+  },
+  {
+    "tick": 11,
+    "seq": 31,
     "type": "EFFECT_APPLIED",
     "actor": "Mikage",
     "data": {
@@ -1148,7 +1196,7 @@
   },
   {
     "tick": 11,
-    "seq": 31,
+    "seq": 32,
     "type": "EFFECT_DURATION_SET",
     "actor": "Mikage",
     "data": {
@@ -1164,7 +1212,7 @@
   },
   {
     "tick": 11,
-    "seq": 32,
+    "seq": 33,
     "type": "TURN_END",
     "actor": "Mikage",
     "data": {
