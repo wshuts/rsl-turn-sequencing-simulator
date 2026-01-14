@@ -5,7 +5,8 @@ Slice 5 — Engine-owned BUFF expiration + user-declared proc request ⇒ MASTER
 
 Contract:
   When a BUFF placed by Mikage expires via ENGINE-owned duration semantics (TURN_END),
-  and the user provides a deterministic proc request for that step (turn_counter),
+  and the user declares a deterministic mastery proc request for Mikage's
+  *skill sequence step* (ADR-001, champion-scoped),
   the engine emits a MASTERY_PROC event with payload:
     { holder: "Mikage", mastery: "rapid_response", count: <n> }
 
@@ -13,12 +14,25 @@ Notes:
 - This test intentionally does NOT assert turn meter changes (that belongs to Slice 6).
 - This test MUST NOT use the injected expiration seam. Expiration must occur naturally
   via engine-owned duration decrement + expire at TURN_END.
+- We remove the test-defined requester closure; the requester is built from battle spec JSON
+  via build_mastery_proc_requester_from_battle_path, matching the demo battlespec shape.
 """
 
-from rsl_turn_sequencing.engine import TM_GATE, step_tick
+import json
+import tempfile
+from pathlib import Path
+
+from rsl_turn_sequencing.engine import TM_GATE, build_mastery_proc_requester_from_battle_path, step_tick
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor, EffectInstance
+from tests._support.battle_spec_helpers import add_mastery_proc_request, find_champion
+
+
+def _write_battle_spec(tmpdir: Path, battle_spec: dict) -> Path:
+    path = tmpdir / "battle_spec_slice5.json"
+    path.write_text(json.dumps(battle_spec, indent=2), encoding="utf-8")
+    return path
 
 
 def test_slice5_engine_owned_mikage_buff_expiration_emits_mastery_proc_when_requested() -> None:
@@ -28,6 +42,12 @@ def test_slice5_engine_owned_mikage_buff_expiration_emits_mastery_proc_when_requ
     # Force Mikage to act deterministically.
     mikage.turn_meter = float(TM_GATE)
     ally.turn_meter = 0.0
+
+    # ADR-001 alignment:
+    # Expiration-triggered proc lookup uses Mikage.skill_sequence_cursor (0-based),
+    # interpreted as "skills consumed so far" (1-based step = cursor).
+    # In unit tests we are not running the CLI skill-token provider, so we set this explicitly.
+    mikage.skill_sequence_cursor = 1  # means Mikage has consumed 1 skill (step 1)
 
     # Arrange: Mikage has a Mikage-placed BUFF with duration=1.
     # Engine-owned decrement occurs at acting actor TURN_END (Slice 3),
@@ -42,21 +62,39 @@ def test_slice5_engine_owned_mikage_buff_expiration_emits_mastery_proc_when_requ
         )
     ]
 
-    # Deterministic proc request: provide Rapid Response proc on turn_counter=1.
-    def mastery_proc_requester(ctx: dict) -> list[dict]:
-        turn_counter = int(ctx.get("turn_counter", 0))
-        if turn_counter == 1:
-            return [{"holder": "Mikage", "mastery": "rapid_response", "count": 1}]
-        return []
+    # Build the mastery proc requester from a battle spec that uses the canonical
+    # entity-scoped demo shape: champions[i].turn_overrides.proc_request.on_step[step].mastery_procs
+    battle_spec = {
+        "boss": {"name": "Boss", "speed": 1500},
+        "champions": [
+            {"slot": 1, "name": "Mikage", "speed": 100.0},
+            {"slot": 2, "name": "Coldheart", "speed": 0.0},
+        ],
+        "options": {"sequence_policy": "error_if_exhausted"},
+    }
 
-    sink = InMemoryEventSink()
-
-    # Act
-    winner = step_tick(
-        [mikage, ally],
-        event_sink=sink,
-        mastery_proc_requester=mastery_proc_requester,
+    mikage_spec = find_champion(battle_spec, name="Mikage")
+    add_mastery_proc_request(
+        mikage_spec,
+        step=1,
+        holder="Mikage",
+        mastery="rapid_response",
+        count=1,
     )
+
+    with tempfile.TemporaryDirectory() as td:
+        battle_path = _write_battle_spec(Path(td), battle_spec)
+        mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path)
+        assert mastery_proc_requester is not None, "Expected requester to be constructed from battle spec."
+
+        sink = InMemoryEventSink()
+
+        # Act
+        winner = step_tick(
+            [mikage, ally],
+            event_sink=sink,
+            mastery_proc_requester=mastery_proc_requester,
+        )
 
     assert winner is mikage
 
@@ -94,12 +132,11 @@ def test_slice5_engine_owned_mikage_buff_expiration_emits_mastery_proc_when_requ
         if e.data.get("holder") == "Mikage"
         and e.data.get("mastery") == "rapid_response"
         and e.data.get("count") == 1
-        and e.data.get("turn_counter") == 1
+        and e.data.get("turn_counter") == 1  # legacy observability only
     ]
     assert matching_procs, "Expected Rapid Response proc payload holder/mastery/count/turn_counter to match."
 
-    # Optional ordering contract: expiration should precede proc emission for this turn_counter.
-    # (This mirrors the injected expiration path ordering.)
+    # Ordering contract: expiration should precede proc emission for this step.
     idx_expired = next(
         i
         for i, e in enumerate(sink.events)
@@ -119,6 +156,7 @@ def test_slice5_engine_owned_mikage_buff_expiration_does_not_emit_mastery_proc_w
 
     mikage.turn_meter = float(TM_GATE)
     ally.turn_meter = 0.0
+    mikage.skill_sequence_cursor = 1  # consumed 1 skill; still no request declared
 
     mikage.active_effects = [
         EffectInstance(
@@ -130,17 +168,27 @@ def test_slice5_engine_owned_mikage_buff_expiration_does_not_emit_mastery_proc_w
         )
     ]
 
-    # No proc request at any step.
-    def mastery_proc_requester(ctx: dict) -> list[dict]:
-        return []
+    battle_spec = {
+        "boss": {"name": "Boss", "speed": 1500},
+        "champions": [
+            {"slot": 1, "name": "Mikage", "speed": 100.0},
+            {"slot": 2, "name": "Coldheart", "speed": 0.0},
+        ],
+        "options": {"sequence_policy": "error_if_exhausted"},
+    }
 
-    sink = InMemoryEventSink()
+    with tempfile.TemporaryDirectory() as td:
+        battle_path = _write_battle_spec(Path(td), battle_spec)
+        mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path)
+        assert mastery_proc_requester is not None
 
-    step_tick(
-        [mikage, ally],
-        event_sink=sink,
-        mastery_proc_requester=mastery_proc_requester,
-    )
+        sink = InMemoryEventSink()
+
+        step_tick(
+            [mikage, ally],
+            event_sink=sink,
+            mastery_proc_requester=mastery_proc_requester,
+        )
 
     assert mikage.active_effects == []
 
