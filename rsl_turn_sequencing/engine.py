@@ -54,15 +54,20 @@ class MasteryProcRequester:
 def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryProcRequester | None:
     """Build a mastery proc requester from a battle spec JSON file.
 
-    Contract:
-      - If the JSON is readable and is an object, ALWAYS return an inspectable requester.
-      - If no proc requests are declared, the requester returns [] for every step.
-      - If the JSON cannot be read/parsed or is not an object, return None.
+    ADR-001 semantics (authoritative):
+      - User-facing `step` is a 1-based index of a specific ENTITY'S skill activation sequence.
+      - Scheduling is entity-scoped (champion-scoped), not global.
+      - Requests are consulted by (entity_name, skill_sequence_step).
 
     Canonical (demo) location:
       entity["turn_overrides"]["proc_request"]["on_step"][step]["mastery_procs"]
 
-    Where entity may be boss or any champion.
+    Where `entity` may be the boss or any champion.
+
+    Return contract:
+      - If the JSON is readable and is an object, ALWAYS return an inspectable requester.
+      - If no proc requests are declared, the requester returns [] for every ctx.
+      - If the JSON cannot be read/parsed or is not an object, return None.
     """
     try:
         raw = json.loads(battle_path.read_text(encoding="utf-8"))
@@ -72,10 +77,15 @@ def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryP
     if not isinstance(raw, dict):
         return None
 
-    schedule: dict[int, list[dict[str, Any]]] = {}
+    # schedule_by_entity[entity_name][skill_sequence_step] -> list[proc_dict]
+    schedule_by_entity: dict[str, dict[int, list[dict[str, Any]]]] = {}
 
-    def _extract_on_step(container: object) -> dict[str, Any] | None:
+    def _extract_on_step(container: object) -> tuple[str, dict[str, Any]] | None:
+        """Return (entity_name, on_step) if present, else None."""
         if not isinstance(container, dict):
+            return None
+        name = container.get("name")
+        if not isinstance(name, str) or not name.strip():
             return None
         turn_overrides = container.get("turn_overrides")
         if not isinstance(turn_overrides, dict):
@@ -86,9 +96,9 @@ def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryP
         on_step = proc_request.get("on_step")
         if not isinstance(on_step, dict):
             return None
-        return on_step
+        return (name, on_step)
 
-    def _merge_on_step(on_step: dict[str, Any]) -> None:
+    def _merge_on_step(entity_name: str, on_step: dict[str, Any]) -> None:
         for k, v in on_step.items():
             if not isinstance(v, dict):
                 continue
@@ -99,31 +109,107 @@ def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryP
                 step_i = int(k)
             except Exception:
                 continue
+            if step_i <= 0:
+                continue
 
             cleaned: list[dict[str, Any]] = [p for p in procs if isinstance(p, dict)]
             if not cleaned:
                 continue
-            schedule.setdefault(step_i, []).extend(cleaned)
+            schedule_by_entity.setdefault(entity_name, {}).setdefault(step_i, []).extend(cleaned)
 
-    # Back-compat: legacy root-level turn_overrides
-    root_on_step = _extract_on_step(raw)
-    if root_on_step is not None:
-        _merge_on_step(root_on_step)
+    # NOTE: ADR-001 removes the meaning of root-level scheduling.
+    # We intentionally do NOT merge root-level `turn_overrides` into the schedule.
 
-    # Canonical: boss and champions
     boss = raw.get("boss")
-    boss_on_step = _extract_on_step(boss)
-    if boss_on_step is not None:
-        _merge_on_step(boss_on_step)
+    boss_pair = _extract_on_step(boss)
+    if boss_pair is not None:
+        entity_name, on_step = boss_pair
+        _merge_on_step(entity_name, on_step)
 
     champions = raw.get("champions")
     if isinstance(champions, list):
         for ch in champions:
-            ch_on_step = _extract_on_step(ch)
-            if ch_on_step is not None:
-                _merge_on_step(ch_on_step)
+            pair = _extract_on_step(ch)
+            if pair is None:
+                continue
+            entity_name, on_step = pair
+            _merge_on_step(entity_name, on_step)
 
-    return MasteryProcRequester(schedule)
+    class _ChampionScopedRequester(MasteryProcRequester):
+        """Requester that supports champion-scoped calls and legacy introspection.
+
+        Call contract (preferred):
+          requester({"champion_name": str, "skill_sequence_step": int}) -> list[dict]
+
+        Back-compat call contract (discouraged):
+          requester({"turn_counter": int}) -> list[dict]
+          This returns the UNION of all entities' requests for that numeric step.
+        """
+
+        def __init__(self, schedule: dict[str, dict[int, list[dict[str, Any]]]]):
+            # Keep base type/duck compatibility; we don't use the base schedule.
+            super().__init__({})
+            self._schedule_by_entity = schedule
+            self.emit_on_turn_start = True
+
+        def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]:
+            if not isinstance(ctx, dict):
+                return []
+
+            champ = ctx.get("champion_name")
+            step = ctx.get("skill_sequence_step")
+            if isinstance(champ, str):
+                try:
+                    step_i = int(step)
+                except Exception:
+                    step_i = None
+                if step_i is not None and step_i > 0:
+                    return list(self._schedule_by_entity.get(champ, {}).get(step_i, []))
+
+            # Legacy union-by-step support (kept for older tests/tools)
+            turn_counter = ctx.get("turn_counter")
+            try:
+                step_i = int(turn_counter)
+            except Exception:
+                return []
+            if step_i <= 0:
+                return []
+            out: list[dict[str, Any]] = []
+            for _entity, per_step in self._schedule_by_entity.items():
+                out.extend(list(per_step.get(step_i, [])))
+            return out
+
+        def steps(self) -> list[int]:
+            # Union of steps across all entities (legacy introspection)
+            s: set[int] = set()
+            for per_step in self._schedule_by_entity.values():
+                s.update(int(k) for k in per_step.keys())
+            return sorted(s)
+
+        def mastery_procs_for_step(self, step: int) -> list[dict[str, Any]]:
+            # Union across all entities (legacy introspection)
+            try:
+                step_i = int(step)
+            except Exception:
+                return []
+            if step_i <= 0:
+                return []
+            out: list[dict[str, Any]] = []
+            for per_step in self._schedule_by_entity.values():
+                out.extend(list(per_step.get(step_i, [])))
+            return out
+
+        def mastery_procs_for_champion_step(self, champion_name: str, step: int) -> list[dict[str, Any]]:
+            # Optional richer introspection (not required by engine).
+            try:
+                step_i = int(step)
+            except Exception:
+                return []
+            if not isinstance(champion_name, str) or not champion_name.strip() or step_i <= 0:
+                return []
+            return list(self._schedule_by_entity.get(champion_name, {}).get(step_i, []))
+
+    return _ChampionScopedRequester(schedule_by_entity)
 
 
 def run_ticks(
@@ -473,14 +559,17 @@ def _maybe_emit_mastery_proc_for_expiration(
     expired_effect: object,
     mastery_proc_requester: callable,
 ) -> None:
-    """Proc dynamics only.
+    """Proc dynamics only (expiration-triggered).
 
     When a BUFF placed by Mikage expires, consult the deterministic proc request
-    provider for this step (turn_counter). If a Rapid Response proc is requested,
-    emit a MASTERY_PROC event with the requested payload.
+    provider keyed by ("Mikage", skill_sequence_step).
 
-    The requester is expected to return a list of dicts like:
-      [{"holder":"Mikage","mastery":"rapid_response","count":1}, ...]
+    ADR-001 alignment:
+      - skill_sequence_step is the number of skills Mikage has consumed so far (1-based).
+        We read this from Actor.skill_sequence_cursor (0-based), which is advanced by the
+        CLI provider when Mikage consumes a skill token.
+      - turn_counter is NOT used for scheduling; it remains in the emitted event payload
+        for legacy observability only.
     """
     effect_kind = getattr(expired_effect, "effect_kind", None)
     placed_by = getattr(expired_effect, "placed_by", None)
@@ -489,38 +578,32 @@ def _maybe_emit_mastery_proc_for_expiration(
     if placed_by != "Mikage":
         return
 
-    _emit_requested_mastery_procs_once(
-        event_sink=event_sink,
-        actors=actors,
-        turn_counter=int(turn_counter),
-        mastery_proc_requester=mastery_proc_requester,
-    )
-
-
-def _emit_requested_mastery_procs_once(
-    *,
-    event_sink: EventSink,
-    actors: list[Actor],
-    turn_counter: int,
-    mastery_proc_requester: callable,
-) -> None:
-    """Emit user-requested mastery procs for this step at most once.
-
-    Architectural note:
-      - CLI acceptance tests need a direct, user-driven seam (request -> event)
-        even before all in-game trigger conditions are fully modeled.
-      - Proc dynamics tests can still validate that requests are *consulted*
-        at expiration time; this helper ensures we don't double-emit.
-    """
-    emitted_steps = getattr(event_sink, "_mastery_proc_steps_emitted", None)
-    if not isinstance(emitted_steps, set):
-        emitted_steps = set()
-        setattr(event_sink, "_mastery_proc_steps_emitted", emitted_steps)
-
-    if int(turn_counter) in emitted_steps:
+    mikage = next((a for a in actors if a.name == "Mikage"), None)
+    if mikage is None:
         return
 
-    requested = mastery_proc_requester({"turn_counter": int(turn_counter)}) or []
+    # ADR-001: consumed-so-far step (1-based), derived from 0-based cursor
+    skill_sequence_step = int(getattr(mikage, "skill_sequence_cursor", 0))
+    if skill_sequence_step <= 0:
+        # Mikage has not consumed any skills yet; there is no valid 1-based step to consult.
+        return
+
+    emitted_keys = getattr(event_sink, "_mastery_proc_keys_emitted", None)
+    if not isinstance(emitted_keys, set):
+        emitted_keys = set()
+        setattr(event_sink, "_mastery_proc_keys_emitted", emitted_keys)
+
+    key = ("Mikage", int(skill_sequence_step))
+    if key in emitted_keys:
+        return
+
+    requested = mastery_proc_requester(
+        {
+            "champion_name": "Mikage",
+            "skill_sequence_step": int(skill_sequence_step),
+            "turn_counter": int(turn_counter),  # legacy observability only
+        }
+    ) or []
     if not isinstance(requested, list):
         raise ValueError("mastery_proc_requester must return a list of proc dicts")
 
@@ -555,7 +638,101 @@ def _emit_requested_mastery_procs_once(
         )
 
     if emitted_any:
-        emitted_steps.add(int(turn_counter))
+        emitted_keys.add(key)
+
+
+def _emit_requested_mastery_procs_once(
+    *,
+    event_sink: EventSink,
+    actors: list[Actor],
+    turn_counter: int,
+    mastery_proc_requester: callable,
+) -> None:
+    """Emit user-requested mastery procs for this turn at most once.
+
+    ADR-001 alignment:
+      - Requests are keyed by (acting_actor_name, skill_sequence_step).
+      - The caller provides `turn_counter` only as a stable per-turn bookmark;
+        it is NOT used for request lookup.
+
+    TURN_START seam behavior:
+      - Determine the acting actor from the most recent TURN_START event.
+      - Interpret `skill_sequence_step` as the NEXT skill token to be consumed:
+          skill_sequence_step = actor.skill_sequence_cursor + 1
+        (skill_sequence_cursor is 0-based and is advanced by the CLI provider when a skill is consumed.)
+    """
+    emitted_keys = getattr(event_sink, "_mastery_proc_keys_emitted", None)
+    if not isinstance(emitted_keys, set):
+        emitted_keys = set()
+        setattr(event_sink, "_mastery_proc_keys_emitted", emitted_keys)
+
+    # Determine the acting actor by inspecting the event stream.
+    acting_actor: str | None = None
+    try:
+        for ev in reversed(getattr(event_sink, "events", []) or []):
+            if getattr(ev, "type", None) == EventType.TURN_START:
+                acting_actor = getattr(ev, "actor", None)
+                break
+    except Exception:
+        acting_actor = None
+
+    if not acting_actor:
+        return
+
+    actor_obj = next((a for a in actors if a.name == acting_actor), None)
+    if actor_obj is None:
+        return
+
+    # ADR-001: next skill activation step (1-based)
+    cursor = int(getattr(actor_obj, "skill_sequence_cursor", 0))
+    skill_sequence_step = cursor + 1
+    key = (acting_actor, int(skill_sequence_step))
+    if key in emitted_keys:
+        return
+
+    requested = mastery_proc_requester(
+        {
+            "champion_name": acting_actor,
+            "skill_sequence_step": int(skill_sequence_step),
+            "turn_counter": int(turn_counter),  # legacy observability only
+        }
+    ) or []
+    if not isinstance(requested, list):
+        raise ValueError("mastery_proc_requester must return a list of proc dicts")
+
+    emitted_any = False
+    for item in requested:
+        if not isinstance(item, dict):
+            raise ValueError("mastery proc request items must be dicts")
+        if item.get("holder") != "Mikage":
+            continue
+        if item.get("mastery") != "rapid_response":
+            continue
+        count = item.get("count")
+        if not isinstance(count, int) or count <= 0:
+            raise ValueError("mastery proc request requires positive int 'count'")
+
+        emitted_any = True
+
+        event_sink.emit(
+            EventType.MASTERY_PROC,
+            actor="Mikage",
+            holder="Mikage",
+            mastery="rapid_response",
+            count=int(count),
+            # Keep turn_counter for legacy observability (it is not used for scheduling).
+            turn_counter=int(turn_counter),
+        )
+
+        _apply_mastery_proc_effects(
+            actors=actors,
+            holder="Mikage",
+            mastery="rapid_response",
+            count=int(count),
+        )
+
+    if emitted_any:
+        emitted_keys.add(key)
 
 
 def _apply_mastery_proc_effects(
