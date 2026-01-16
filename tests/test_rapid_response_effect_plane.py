@@ -56,7 +56,14 @@ def test_rapid_response_mastery_proc_increases_mikage_turn_meter_by_10_percent_p
             effect_kind="BUFF",
             placed_by="Mikage",
             duration=1,
-        )
+        ),
+        EffectInstance(
+            instance_id="fx_rr_effect_plane_02",
+            effect_id="increase_atk",
+            effect_kind="BUFF",
+            placed_by="Mikage",
+            duration=1,
+        ),
     ]
 
     # Battle spec expresses user intent for Rapid Response to proc with count=2 on step 1.

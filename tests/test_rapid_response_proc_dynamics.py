@@ -47,7 +47,7 @@ def _base_battle_spec() -> dict:
     }
 
 
-def _arrange_mikage_with_expiring_buff(step: int) -> tuple[Actor, Actor]:
+def _arrange_mikage_with_expiring_buff(step: int, expirations: int = 1) -> tuple[Actor, Actor]:
     mikage = Actor(name="Mikage", speed=100.0)
     ally = Actor(name="Coldheart", speed=0.0)
 
@@ -58,14 +58,19 @@ def _arrange_mikage_with_expiring_buff(step: int) -> tuple[Actor, Actor]:
     # we explicitly set the cursor to align with the requested step.
     mikage.skill_sequence_cursor = step
 
+    expirations_i = int(expirations)
+    if expirations_i < 1:
+        expirations_i = 1
+
     mikage.active_effects = [
         EffectInstance(
-            instance_id="fx_rr_test",
+            instance_id=f"fx_rr_test_{i+1}",
             effect_id="increase_atk",
             effect_kind="BUFF",
             placed_by="Mikage",
             duration=1,
         )
+        for i in range(expirations_i)
     ]
 
     return mikage, ally
@@ -81,7 +86,7 @@ def test_rapid_response_proc_fires_with_requested_count_on_buff_expiration() -> 
       - Exactly one MASTERY_PROC event
       - Payload reflects requested count
     """
-    mikage, ally = _arrange_mikage_with_expiring_buff(step=1)
+    mikage, ally = _arrange_mikage_with_expiring_buff(step=1, expirations=2)
 
     battle_spec = _base_battle_spec()
     mikage_spec = find_champion(battle_spec, name="Mikage")

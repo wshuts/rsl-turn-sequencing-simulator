@@ -24,6 +24,10 @@ class EventType(str, Enum):
     # This is a control-plane event (proc dynamics only).
     MASTERY_PROC = "MASTERY_PROC"
 
+    # Emitted when a user-declared mastery proc request is rejected by the engine's guard.
+    # This is a control-plane event (validation only); no proc effects are applied.
+    MASTERY_PROC_REJECTED = "MASTERY_PROC_REJECTED"
+
     # Emitted when an actor consumes a skill token from its skill_sequence.
     # Must occur within TURN_START → TURN_END so it is preserved by derive_turn_rows().
     SKILL_CONSUMED = "SKILL_CONSUMED"

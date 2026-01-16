@@ -432,16 +432,6 @@ def _expire_active_effects_turn_end(
         # Slice A: record qualifying expirations for deterministic validation.
         _record_qualifying_expiration(event_sink=event_sink, actors=actors, expired_effect=fx)
 
-        # Slice 5: mastery proc gating for engine-owned expirations.
-        if mastery_proc_requester is not None:
-            _maybe_emit_mastery_proc_for_expiration(
-                event_sink=event_sink,
-                actors=actors,
-                turn_counter=int(turn_counter),
-                expired_effect=fx,
-                mastery_proc_requester=mastery_proc_requester,
-            )
-
 
 
 def _emit_injected_expirations(
@@ -499,18 +489,6 @@ def _emit_injected_expirations(
 
             # Slice A: record qualifying expirations for deterministic validation.
             _record_qualifying_expiration(event_sink=event_sink, actors=actors, expired_effect=fx)
-
-            # Slice: Rapid Response (proc dynamics only)
-            # If a BUFF placed by Mikage expires and a deterministic proc request exists
-            # for this step (turn_counter), emit MASTERY_PROC with the requested payload.
-            if mastery_proc_requester is not None:
-                _maybe_emit_mastery_proc_for_expiration(
-                    event_sink=event_sink,
-                    actors=actors,
-                    turn_counter=turn_counter,
-                    expired_effect=fx,
-                    mastery_proc_requester=mastery_proc_requester,
-                )
 
         else:
             raise ValueError(
@@ -691,6 +669,121 @@ def _maybe_emit_mastery_proc_for_expiration(
 
     if emitted_any:
         emitted_keys.add(key)
+
+
+
+
+def _resolve_guarded_mastery_procs_for_qualifying_expirations(
+    *,
+    event_sink: "EventSink",
+    actors: list[Actor],
+    turn_counter: int,
+    mastery_proc_requester: callable,
+) -> None:
+    """Slice B: Guarded deterministic resolution for expiration-triggered mastery procs.
+
+    Slice A records qualifying expiration counts on the event sink:
+      event_sink._qualifying_expiration_counts[(holder_name, skill_sequence_step)] = Q
+
+    Slice B enforces that a user-declared deterministic proc request for (holder, step)
+    MUST match Q.
+
+    Guard behavior (Option B):
+      - If a request exists for (holder, step) and requested_count != Q, emit
+        MASTERY_PROC_REJECTED and do NOT apply proc effects.
+      - If requested_count == Q, emit MASTERY_PROC and apply proc effects.
+      - If no request exists for (holder, step), do nothing (no rejection).
+
+    Current scope (minimal): Mikage rapid_response only.
+    """
+    counts = getattr(event_sink, "_qualifying_expiration_counts", None)
+    if not isinstance(counts, dict) or not counts:
+        return
+
+    resolved = getattr(event_sink, "_mastery_proc_keys_resolved", None)
+    if not isinstance(resolved, set):
+        resolved = set()
+        setattr(event_sink, "_mastery_proc_keys_resolved", resolved)
+
+    # Iterate deterministically for stable testing.
+    for (holder_name, skill_sequence_step), q in sorted(counts.items(), key=lambda kv: (str(kv[0][0]), int(kv[0][1]))):
+        if holder_name != "Mikage":
+            continue
+        try:
+            step_i = int(skill_sequence_step)
+            q_i = int(q)
+        except Exception:
+            continue
+        if step_i <= 0 or q_i <= 0:
+            continue
+
+        key = (holder_name, step_i)
+        if key in resolved:
+            continue
+
+        requested = mastery_proc_requester(
+            {
+                "champion_name": holder_name,
+                "skill_sequence_step": int(step_i),
+                "turn_counter": int(turn_counter),  # legacy observability only
+            }
+        ) or []
+        if not isinstance(requested, list):
+            raise ValueError("mastery_proc_requester must return a list of proc dicts")
+
+        requested_total = 0
+        has_request = False
+        for item in requested:
+            if not isinstance(item, dict):
+                raise ValueError("mastery proc request items must be dicts")
+            if item.get("holder") != holder_name:
+                continue
+            if item.get("mastery") != "rapid_response":
+                continue
+            count = item.get("count")
+            if not isinstance(count, int) or count <= 0:
+                raise ValueError("mastery proc request requires positive int 'count'")
+            has_request = True
+            requested_total += int(count)
+
+        if not has_request:
+            # No declared request for this (holder, step): remain silent.
+            continue
+
+        if int(requested_total) != int(q_i):
+            event_sink.emit(
+                EventType.MASTERY_PROC_REJECTED,
+                actor=holder_name,
+                holder=holder_name,
+                mastery="rapid_response",
+                requested_count=int(requested_total),
+                qualifying_count=int(q_i),
+                skill_sequence_step=int(step_i),
+                turn_counter=int(turn_counter),
+                reason="requested_count_mismatch",
+            )
+            resolved.add(key)
+            continue
+
+        # Match: emit proc and apply effects.
+        event_sink.emit(
+            EventType.MASTERY_PROC,
+            actor=holder_name,
+            holder=holder_name,
+            mastery="rapid_response",
+            count=int(requested_total),
+            skill_sequence_step=int(step_i),
+            turn_counter=int(turn_counter),  # legacy observability only
+        )
+
+        _apply_mastery_proc_effects(
+            actors=actors,
+            holder=holder_name,
+            mastery="rapid_response",
+            count=int(requested_total),
+        )
+
+        resolved.add(key)
 
 
 def _emit_requested_mastery_procs_once(
@@ -933,7 +1026,6 @@ def step_tick(
             if shield_max is not None:
                 best.shield = int(shield_max)
 
-        # --- TURN_START bookmark should be emitted BEFORE TURN_START housekeeping/DI seams ---
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             if join_attack_joiners is None:
@@ -1117,6 +1209,15 @@ def step_tick(
                 actor=best.name,
                 actor_index=i_best,
                 effect=str(e.kind),
+            )
+
+        # Slice B: resolve guarded proc requests after all expirations for this turn, before TURN_END.
+        if mastery_proc_requester is not None:
+            _resolve_guarded_mastery_procs_for_qualifying_expirations(
+                event_sink=event_sink,
+                actors=actors,
+                turn_counter=int(turn_counter),
+                mastery_proc_requester=mastery_proc_requester,
             )
 
         boss_shield = _boss_shield_snapshot(actors)
