@@ -233,14 +233,14 @@ def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryP
 
 
 def run_ticks(
-    *,
-    actors: list[Actor],
-    event_sink: EventSink,
-    ticks: int,
-    hit_provider: Callable[[str], dict[str, int]] | None = None,
-    battle_path_for_mastery_procs: Path | None = None,
-    stop_after_boss_turns: int | None = None,
-    boss_actor: str = "Boss",
+        *,
+        actors: list[Actor],
+        event_sink: EventSink,
+        ticks: int,
+        hit_provider: Callable[[str], dict[str, int]] | None = None,
+        battle_path_for_mastery_procs: Path | None = None,
+        stop_after_boss_turns: int | None = None,
+        boss_actor: str = "Boss",
 ) -> None:
     """Engine-owned ticking loop.
 
@@ -346,15 +346,14 @@ def _decrement_active_effect_durations_turn_end(actor: Actor, *, turn_counter: i
     return duration_before
 
 
-
 def _emit_effect_duration_changed_events(
-    *,
-    event_sink: EventSink,
-    owner: Actor,
-    duration_before: dict[str, int],
-    turn_counter: int,
-    boundary: str,
-    reason: str,
+        *,
+        event_sink: EventSink,
+        owner: Actor,
+        duration_before: dict[str, int],
+        turn_counter: int,
+        boundary: str,
+        reason: str,
 ) -> None:
     """Emit EFFECT_DURATION_CHANGED for any EffectInstance on `owner` whose duration changed.
 
@@ -392,14 +391,14 @@ def _emit_effect_duration_changed_events(
 
 
 def _expire_active_effects_turn_end(
-    *,
-    owner: Actor,
-    owner_index: int,
-    actors: list[Actor],
-    event_sink: EventSink,
-    duration_before: dict[str, int],
-    turn_counter: int,
-    mastery_proc_requester: callable | None = None,
+        *,
+        owner: Actor,
+        owner_index: int,
+        actors: list[Actor],
+        event_sink: EventSink,
+        duration_before: dict[str, int],
+        turn_counter: int,
+        mastery_proc_requester: callable | None = None,
 ) -> None:
     """Slice 4/5: Expire BUFF instances whose duration reached 0 at TURN_END.
 
@@ -453,17 +452,16 @@ def _expire_active_effects_turn_end(
         _record_qualifying_expiration(event_sink=event_sink, actors=actors, expired_effect=fx)
 
 
-
 def _resolve_external_expirations_for_phase(
-    *,
-    event_sink: "EventSink",
-    actors: list["Actor"],
-    phase: "EventType",
-    acting_actor: "Actor",
-    acting_actor_index: int,
-    turn_counter: int,
-    expiration_resolver: ExpirationResolver,
-    mastery_proc_requester: callable | None = None,
+        *,
+        event_sink: "EventSink",
+        actors: list["Actor"],
+        phase: "EventType",
+        acting_actor: "Actor",
+        acting_actor_index: int,
+        turn_counter: int,
+        expiration_resolver: ExpirationResolver,
+        mastery_proc_requester: callable | None = None,
 ) -> None:
     injected = expiration_resolver(
         {
@@ -556,10 +554,10 @@ def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
 
 
 def _record_qualifying_expiration(
-    *,
-    event_sink: "EventSink",
-    actors: list[Actor],
-    expired_effect: object,
+        *,
+        event_sink: "EventSink",
+        actors: list[Actor],
+        expired_effect: object,
 ) -> None:
     """Slice A: Record qualifying expirations for later guarded resolution.
 
@@ -601,104 +599,12 @@ def _record_qualifying_expiration(
     counts[key] = int(counts.get(key, 0)) + 1
 
 
-def _maybe_emit_mastery_proc_for_expiration(
-    *,
-    event_sink: "EventSink",
-    actors: list[Actor],
-    turn_counter: int,
-    expired_effect: object,
-    mastery_proc_requester: callable,
-) -> None:
-    """Proc dynamics only (expiration-triggered).
-
-    When a BUFF placed by Mikage expires, consult the deterministic proc request
-    provider keyed by ("Mikage", skill_sequence_step).
-
-    ADR-001 alignment:
-      - skill_sequence_step is the number of skills Mikage has consumed so far (1-based).
-        We read this from Actor.skill_sequence_cursor (0-based), which is advanced by the
-        CLI provider when Mikage consumes a skill token.
-      - turn_counter is NOT used for scheduling; it remains in the emitted event payload
-        for legacy observability only.
-    """
-    effect_kind = getattr(expired_effect, "effect_kind", None)
-    placed_by = getattr(expired_effect, "placed_by", None)
-    if effect_kind != "BUFF":
-        return
-    if placed_by != "Mikage":
-        return
-
-    mikage = next((a for a in actors if a.name == "Mikage"), None)
-    if mikage is None:
-        return
-
-    # ADR-001: consumed-so-far step (1-based), derived from 0-based cursor
-    skill_sequence_step = int(getattr(mikage, "skill_sequence_cursor", 0))
-    if skill_sequence_step <= 0:
-        # Mikage has not consumed any skills yet; there is no valid 1-based step to consult.
-        return
-
-    emitted_keys = getattr(event_sink, "_mastery_proc_keys_emitted", None)
-    if not isinstance(emitted_keys, set):
-        emitted_keys = set()
-        setattr(event_sink, "_mastery_proc_keys_emitted", emitted_keys)
-
-    key = ("Mikage", int(skill_sequence_step))
-    if key in emitted_keys:
-        return
-
-    requested = mastery_proc_requester(
-        {
-            "champion_name": "Mikage",
-            "skill_sequence_step": int(skill_sequence_step),
-            "turn_counter": int(turn_counter),  # legacy observability only
-        }
-    ) or []
-    if not isinstance(requested, list):
-        raise ValueError("mastery_proc_requester must return a list of proc dicts")
-
-    emitted_any = False
-    for item in requested:
-        if not isinstance(item, dict):
-            raise ValueError("mastery proc request items must be dicts")
-        if item.get("holder") != "Mikage":
-            continue
-        if item.get("mastery") != "rapid_response":
-            continue
-        count = item.get("count")
-        if not isinstance(count, int) or count <= 0:
-            raise ValueError("mastery proc request requires positive int 'count'")
-
-        emitted_any = True
-
-        event_sink.emit(
-            EventType.MASTERY_PROC,
-            actor="Mikage",
-            holder="Mikage",
-            mastery="rapid_response",
-            count=int(count),
-            turn_counter=int(turn_counter),
-        )
-
-        _apply_mastery_proc_effects(
-            actors=actors,
-            holder="Mikage",
-            mastery="rapid_response",
-            count=int(count),
-        )
-
-    if emitted_any:
-        emitted_keys.add(key)
-
-
-
-
 def _resolve_guarded_mastery_procs_for_qualifying_expirations(
-    *,
-    event_sink: "EventSink",
-    actors: list[Actor],
-    turn_counter: int,
-    mastery_proc_requester: callable,
+        *,
+        event_sink: "EventSink",
+        actors: list[Actor],
+        turn_counter: int,
+        mastery_proc_requester: callable,
 ) -> None:
     """Slice B: Guarded deterministic resolution for expiration-triggered mastery procs.
 
@@ -807,11 +713,11 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
 
 
 def _emit_requested_mastery_procs_once(
-    *,
-    event_sink: EventSink,
-    actors: list[Actor],
-    turn_counter: int,
-    mastery_proc_requester: callable,
+        *,
+        event_sink: EventSink,
+        actors: list[Actor],
+        turn_counter: int,
+        mastery_proc_requester: callable,
 ) -> None:
     """Emit user-requested mastery procs for this turn at most once.
 
@@ -901,11 +807,11 @@ def _emit_requested_mastery_procs_once(
 
 
 def _apply_mastery_proc_effects(
-    *,
-    actors: list["Actor"],
-    holder: str,
-    mastery: str,
-    count: int,
+        *,
+        actors: list["Actor"],
+        holder: str,
+        mastery: str,
+        count: int,
 ) -> None:
     """
     Effect-plane handler (minimal): apply deterministic effects for proc events.
@@ -926,19 +832,19 @@ def _apply_mastery_proc_effects(
 
 
 def step_tick(
-    actors: list[Actor],
-    event_sink: EventSink | None = None,
-    *,
-    snapshot_capture: set[int] | None = None,
-    hit_counts_by_actor: dict[str, int] | None = None,
-    hit_provider: callable | None = None,
-    # Dependency-injection seam: phase-aware expiration resolver.
-    #
-    # Back-compat: `expiration_injector` is kept as an alias, but the semantic
-    # contract is now explicit: it is called once per expiration phase.
-    expiration_resolver: ExpirationResolver | None = None,
-    expiration_injector: callable | None = None,
-    mastery_proc_requester: callable | None = None,
+        actors: list[Actor],
+        event_sink: EventSink | None = None,
+        *,
+        snapshot_capture: set[int] | None = None,
+        hit_counts_by_actor: dict[str, int] | None = None,
+        hit_provider: callable | None = None,
+        # Dependency-injection seam: phase-aware expiration resolver.
+        #
+        # Back-compat: `expiration_injector` is kept as an alias, but the semantic
+        # contract is now explicit: it is called once per expiration phase.
+        expiration_resolver: ExpirationResolver | None = None,
+        expiration_injector: callable | None = None,
+        mastery_proc_requester: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -989,15 +895,13 @@ def step_tick(
             event_sink.start_tick()
             event_sink.emit(EventType.TICK_START)
 
-        
-
     # 1) simultaneous fill (only if no extra turn was granted)
     if best is None:
         for a in actors:
             eff_speed = (
-                float(a.speed)
-                * float(a.speed_multiplier)
-                * float(speed_multiplier_from_effects(a.effects))
+                    float(a.speed)
+                    * float(a.speed_multiplier)
+                    * float(speed_multiplier_from_effects(a.effects))
             )
             a.turn_meter += eff_speed
 
@@ -1047,8 +951,8 @@ def step_tick(
                 a.name
                 for a in actors
                 if (not a.is_boss)
-                and (a is not best)
-                and (getattr(a, "faction", None) == "Shadowkin")
+                   and (a is not best)
+                   and (getattr(a, "faction", None) == "Shadowkin")
             ]
 
         # Boss shield semantics (C1 deliverable):
@@ -1172,9 +1076,9 @@ def step_tick(
     # Optional snapshot capture at TURN_END (observer-only)
     if event_sink is not None:
         if (
-            snapshot_capture is not None
-            and event_sink.current_tick in snapshot_capture
-            and hasattr(event_sink, "capture_snapshot")
+                snapshot_capture is not None
+                and event_sink.current_tick in snapshot_capture
+                and hasattr(event_sink, "capture_snapshot")
         ):
             event_sink.capture_snapshot(
                 turn=event_sink.current_tick,
@@ -1217,7 +1121,6 @@ def step_tick(
             boundary="turn_end",
             reason="tick_decrement",
         )
-
 
     # Slice 4: Expire BUFF instances whose duration reached 0 (engine-owned).
     if event_sink is not None and duration_before:
