@@ -429,6 +429,9 @@ def _expire_active_effects_turn_end(
             phase=str(EventType.TURN_END),
         )
 
+        # Slice A: record qualifying expirations for deterministic validation.
+        _record_qualifying_expiration(event_sink=event_sink, actors=actors, expired_effect=fx)
+
         # Slice 5: mastery proc gating for engine-owned expirations.
         if mastery_proc_requester is not None:
             _maybe_emit_mastery_proc_for_expiration(
@@ -494,6 +497,9 @@ def _emit_injected_expirations(
                 acting_actor=acting_actor.name,
             )
 
+            # Slice A: record qualifying expirations for deterministic validation.
+            _record_qualifying_expiration(event_sink=event_sink, actors=actors, expired_effect=fx)
+
             # Slice: Rapid Response (proc dynamics only)
             # If a BUFF placed by Mikage expires and a deterministic proc request exists
             # for this step (turn_counter), emit MASTERY_PROC with the requested payload.
@@ -549,6 +555,52 @@ def _expire_effect_instance_by_id(*, actors: list["Actor"], instance_id: str):
                 removed = current.pop(i)
                 return a, removed
     raise ValueError(f"Effect instance_id not found: {instance_id}")
+
+
+def _record_qualifying_expiration(
+    *,
+    event_sink: "EventSink",
+    actors: list[Actor],
+    expired_effect: object,
+) -> None:
+    """Slice A: Record qualifying expirations for later guarded resolution.
+
+    We do NOT emit any events here; we only record counts on the event sink.
+
+    Qualifying rule (minimal / initial):
+      - expired_effect.effect_kind == "BUFF"
+      - expired_effect.placed_by matches an existing Actor.name
+      - step is holder's ADR-001 skill_sequence_step (1-based), derived from
+        Actor.skill_sequence_cursor (0-based consumed count).
+
+    Stored at:
+      event_sink._qualifying_expiration_counts[(holder_name, skill_sequence_step)] = int
+    """
+    effect_kind = getattr(expired_effect, "effect_kind", None)
+    if effect_kind != "BUFF":
+        return
+
+    placed_by = getattr(expired_effect, "placed_by", None)
+    if not isinstance(placed_by, str) or not placed_by.strip():
+        return
+
+    holder = next((a for a in actors if a.name == placed_by), None)
+    if holder is None:
+        # Unknown placer; ignore for determinism.
+        return
+
+    # ADR-001: skill_sequence_step is 1-based consumed-so-far.
+    step = int(getattr(holder, "skill_sequence_cursor", 0))
+    if step <= 0:
+        return
+
+    counts = getattr(event_sink, "_qualifying_expiration_counts", None)
+    if not isinstance(counts, dict):
+        counts = {}
+        setattr(event_sink, "_qualifying_expiration_counts", counts)
+
+    key = (holder.name, int(step))
+    counts[key] = int(counts.get(key, 0)) + 1
 
 
 def _maybe_emit_mastery_proc_for_expiration(
