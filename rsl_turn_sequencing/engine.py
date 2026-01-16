@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 from rsl_turn_sequencing.effects import (
     apply_turn_start_effects,
@@ -15,6 +15,26 @@ from rsl_turn_sequencing.models import Actor, EffectInstance
 
 TM_GATE = 1430.0
 EPS = 1e-9
+
+
+class ExpirationResolver(Protocol):
+    """Phase-aware expiration resolver.
+
+    This is a dependency-injection seam used by BOTH production and tests.
+
+    The engine will call the resolver at *authoritative expiration phases*:
+      - TURN_START phase (begin-of-turn triggers/decrements)
+      - TURN_END phase (end-of-turn decrements/expiry)
+
+    The resolver MUST NOT invent state. It may only request expiration of
+    effect instances that already exist in the current effect state.
+
+    Return value:
+      - Iterable of schema-backed requests, currently supporting:
+        {"type":"expire_effect","instance_id":"...","reason":"injected"}
+    """
+
+    def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]: ...
 
 
 class MasteryProcRequester:
@@ -442,10 +462,10 @@ def _emit_injected_expirations(
     acting_actor: "Actor",
     acting_actor_index: int,
     turn_counter: int,
-    expiration_injector: callable,
+    expiration_resolver: ExpirationResolver,
     mastery_proc_requester: callable | None = None,
 ) -> None:
-    injected = expiration_injector(
+    injected = expiration_resolver(
         {
             "phase": str(phase),
             "acting_actor": acting_actor.name,
@@ -912,6 +932,11 @@ def step_tick(
     snapshot_capture: set[int] | None = None,
     hit_counts_by_actor: dict[str, int] | None = None,
     hit_provider: callable | None = None,
+    # Dependency-injection seam: phase-aware expiration resolver.
+    #
+    # Back-compat: `expiration_injector` is kept as an alias, but the semantic
+    # contract is now explicit: it is called once per expiration phase.
+    expiration_resolver: ExpirationResolver | None = None,
     expiration_injector: callable | None = None,
     mastery_proc_requester: callable | None = None,
 ) -> Actor | None:
@@ -940,6 +965,12 @@ def step_tick(
     - Therefore, end-of-turn duration decrement and any EFFECT_EXPIRED events must occur
       BEFORE emitting TURN_END.
     """
+
+    # Normalize DI seam: prefer phase-aware expiration_resolver.
+    #
+    # Back-compat: callers/tests may still pass `expiration_injector`.
+    if expiration_resolver is None and expiration_injector is not None:
+        expiration_resolver = expiration_injector  # type: ignore[assignment]
 
     # 0) extra turn handling (no fill)
     extra_candidates = [(i, a) for i, a in enumerate(actors) if int(a.extra_turns) > 0]
@@ -1071,8 +1102,8 @@ def step_tick(
                 mastery_proc_requester=mastery_proc_requester,
             )
 
-        # Slice 1: allow tests to inject expirations immediately AFTER TURN_START.
-        if expiration_injector is not None:
+        # Phase-aware expirations (DI): resolve expirations at TURN_START phase.
+        if expiration_resolver is not None:
             _emit_injected_expirations(
                 event_sink=event_sink,
                 actors=actors,
@@ -1080,7 +1111,7 @@ def step_tick(
                 acting_actor=best,
                 acting_actor_index=i_best,
                 turn_counter=turn_counter,
-                expiration_injector=expiration_injector,
+                expiration_resolver=expiration_resolver,
                 mastery_proc_requester=mastery_proc_requester,
             )
     else:
@@ -1162,8 +1193,8 @@ def step_tick(
                 },
             )
 
-        # Slice 1: allow tests to inject expirations immediately before TURN_END.
-        if expiration_injector is not None:
+        # Phase-aware expirations (DI): resolve expirations at TURN_END phase.
+        if expiration_resolver is not None:
             _emit_injected_expirations(
                 event_sink=event_sink,
                 actors=actors,
@@ -1171,7 +1202,7 @@ def step_tick(
                 acting_actor=best,
                 acting_actor_index=i_best,
                 turn_counter=int(turn_counter),
-                expiration_injector=expiration_injector,
+                expiration_resolver=expiration_resolver,
                 mastery_proc_requester=mastery_proc_requester,
             )
 

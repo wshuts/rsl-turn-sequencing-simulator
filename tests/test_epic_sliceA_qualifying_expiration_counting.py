@@ -61,7 +61,7 @@ def test_sliceA_records_qualifying_expirations_by_holder_and_step() -> None:
     sink = InMemoryEventSink()
     sink.start_tick()
 
-    def injector(_ctx: dict) -> list[dict]:
+    def resolver(_ctx: dict) -> list[dict]:
         # Expire all four instances deterministically.
         return [
             {"type": "expire_effect", "instance_id": "fx1", "reason": "injected"},
@@ -77,7 +77,7 @@ def test_sliceA_records_qualifying_expirations_by_holder_and_step() -> None:
         acting_actor=mikage,
         acting_actor_index=0,
         turn_counter=1,
-        expiration_injector=injector,
+        expiration_resolver=resolver,
         mastery_proc_requester=None,
     )
 
