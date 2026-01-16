@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-from rsl_turn_sequencing.engine import _emit_injected_expirations
+from rsl_turn_sequencing.engine import _resolve_external_expirations_for_phase
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor, EffectInstance
@@ -70,7 +70,7 @@ def test_sliceA_records_qualifying_expirations_by_holder_and_step() -> None:
             {"type": "expire_effect", "instance_id": "fx4", "reason": "injected"},
         ]
 
-    _emit_injected_expirations(
+    _resolve_external_expirations_for_phase(
         event_sink=sink,
         actors=actors,
         phase=EventType.TURN_END,

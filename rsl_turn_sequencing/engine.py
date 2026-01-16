@@ -454,7 +454,7 @@ def _expire_active_effects_turn_end(
 
 
 
-def _emit_injected_expirations(
+def _resolve_external_expirations_for_phase(
     *,
     event_sink: "EventSink",
     actors: list["Actor"],
@@ -1104,7 +1104,7 @@ def step_tick(
 
         # Phase-aware expirations (DI): resolve expirations at TURN_START phase.
         if expiration_resolver is not None:
-            _emit_injected_expirations(
+            _resolve_external_expirations_for_phase(
                 event_sink=event_sink,
                 actors=actors,
                 phase=EventType.TURN_START,
@@ -1195,7 +1195,7 @@ def step_tick(
 
         # Phase-aware expirations (DI): resolve expirations at TURN_END phase.
         if expiration_resolver is not None:
-            _emit_injected_expirations(
+            _resolve_external_expirations_for_phase(
                 event_sink=event_sink,
                 actors=actors,
                 phase=EventType.TURN_END,
