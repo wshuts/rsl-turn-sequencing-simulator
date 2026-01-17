@@ -623,8 +623,8 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
     Current scope (minimal): Mikage rapid_response only.
     """
     counts = getattr(event_sink, "_qualifying_expiration_counts", None)
-    if not isinstance(counts, dict) or not counts:
-        return
+    if not isinstance(counts, dict):
+        counts = {}
 
     resolved = getattr(event_sink, "_mastery_proc_keys_resolved", None)
     if not isinstance(resolved, set):
@@ -709,6 +709,68 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
             count=int(requested_total),
         )
 
+        resolved.add(key)
+
+    # Slice D / D4: If a request exists for a (holder, step) but Q==0, emit an explicit rejection.
+    # This prevents silent drops when the user requests an expiration-triggered proc but the
+    # qualifying expirations never occur.
+    for holder_name in ("Mikage",):
+        holder_obj = next((a for a in actors if a.name == holder_name), None)
+        if holder_obj is None:
+            continue
+
+        # ADR-001: expiration-triggered lookup uses consumed-so-far step (1-based).
+        step_i = int(getattr(holder_obj, "skill_sequence_cursor", 0))
+        if step_i <= 0:
+            continue
+
+        key = (holder_name, step_i)
+        if key in resolved:
+            continue
+
+        q_i = int(counts.get(key, 0))
+        if q_i != 0:
+            continue
+
+        requested = mastery_proc_requester(
+            {
+                "champion_name": holder_name,
+                "skill_sequence_step": int(step_i),
+                "turn_counter": int(turn_counter),  # legacy observability only
+            }
+        ) or []
+        if not isinstance(requested, list):
+            raise ValueError("mastery_proc_requester must return a list of proc dicts")
+
+        requested_total = 0
+        has_request = False
+        for item in requested:
+            if not isinstance(item, dict):
+                raise ValueError("mastery proc request items must be dicts")
+            if item.get("holder") != holder_name:
+                continue
+            if item.get("mastery") != "rapid_response":
+                continue
+            count = item.get("count")
+            if not isinstance(count, int) or count <= 0:
+                raise ValueError("mastery proc request requires positive int 'count'")
+            has_request = True
+            requested_total += int(count)
+
+        if not has_request:
+            continue
+
+        event_sink.emit(
+            EventType.MASTERY_PROC_REJECTED,
+            actor=holder_name,
+            holder=holder_name,
+            mastery="rapid_response",
+            requested_count=int(requested_total),
+            qualifying_count=0,
+            skill_sequence_step=int(step_i),
+            turn_counter=int(turn_counter),
+            reason="no_qualifying_expirations",
+        )
         resolved.add(key)
 
 
