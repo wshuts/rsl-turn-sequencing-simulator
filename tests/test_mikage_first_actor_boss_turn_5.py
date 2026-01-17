@@ -1,9 +1,9 @@
-# tests/test_acceptance_mikage_first_actor_boss_turn_5.py
+# tests/test_mikage_first_actor_boss_turn_5.py
 
 from rsl_turn_sequencing.__main__ import main
 
 # Import the same helpers used by the mirror test
-from tests.test_acceptance_mikage_metamorph_extra_turn import (
+from tests.test_mikage_metamorph_extra_turn import (
     _extract_frame_actor_rows,
     _actor_name_from_row,
 )
