@@ -684,6 +684,10 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
                 mastery="rapid_response",
                 requested_count=int(requested_total),
                 qualifying_count=int(q_i),
+                # Slice D / D5: prefer explicit naming while retaining legacy field.
+                qualifying_expiration_count=int(q_i),
+                resolution_phase=str(EventType.TURN_END),
+                resolution_step=int(step_i),
                 skill_sequence_step=int(step_i),
                 turn_counter=int(turn_counter),
                 reason="requested_count_mismatch",
@@ -698,6 +702,10 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
             holder=holder_name,
             mastery="rapid_response",
             count=int(requested_total),
+            # Slice D / D2: success-path causal attribution (observability only).
+            qualifying_expiration_count=int(q_i),
+            resolution_phase=str(EventType.TURN_END),
+            resolution_step=int(step_i),
             skill_sequence_step=int(step_i),
             turn_counter=int(turn_counter),  # legacy observability only
         )
@@ -767,6 +775,10 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
             mastery="rapid_response",
             requested_count=int(requested_total),
             qualifying_count=0,
+            # Slice D / D5: prefer explicit naming while retaining legacy field.
+            qualifying_expiration_count=0,
+            resolution_phase=str(EventType.TURN_END),
+            resolution_step=int(step_i),
             skill_sequence_step=int(step_i),
             turn_counter=int(turn_counter),
             reason="no_qualifying_expirations",
