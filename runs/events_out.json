@@ -3343,6 +3343,24 @@
   {
     "tick": 26,
     "seq": 12,
+    "type": "MASTERY_PROC_REJECTED",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "requested_count": 1,
+      "qualifying_count": 2,
+      "qualifying_expiration_count": 2,
+      "resolution_phase": "EventType.TURN_END",
+      "resolution_step": 6,
+      "skill_sequence_step": 6,
+      "turn_counter": 23,
+      "reason": "requested_count_mismatch"
+    }
+  },
+  {
+    "tick": 26,
+    "seq": 13,
     "type": "TURN_END",
     "actor": "Mikage",
     "data": {
