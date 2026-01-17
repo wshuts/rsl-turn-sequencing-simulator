@@ -1,7 +1,7 @@
 # Slice D — Acceptance Criteria  
 **Epic:** Guarded Deterministic Mastery Proc Resolution on Effect Expiration  
 **Slice:** D  
-**Status:** Draft  
+**Status:** Locked (field names finalized)  
 **Depends On:** Slice C (Closed)
 
 ---
@@ -62,9 +62,9 @@ Improve **observability, traceability, and diagnostic clarity** of mastery proc 
 **Then**
 - The emitted `MASTERY_PROC` event includes **causal metadata** sufficient to explain *why* `count = N`
 
-**Minimum required diagnostic fields (exact naming TBD):**
+**Minimum required diagnostic fields (exact naming locked):**
 - `qualifying_expiration_count`
-- `resolution_phase` (e.g., `TURN_END`)
+- `resolution_phase` = `"EventType.TURN_END"` (exact string)
 - `resolution_step` (derived from skill/turn cursor)
 
 **Notes**
