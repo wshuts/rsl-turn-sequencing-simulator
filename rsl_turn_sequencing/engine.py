@@ -67,6 +67,53 @@ class HitContributionResolver(Protocol):
     ) -> dict[str, int]: ...
 
 
+def _default_hit_contribution_resolver(
+    *,
+    acting_actor: "Actor",
+    actors: list["Actor"],
+    base_hits: dict[str, int],
+    turn_counter: int,
+    tick: int,
+) -> dict[str, int]:
+    """Engine-owned default resolver for additional shield-hit contributors.
+
+    For now, this resolver implements a deterministic subset of rule behavior.
+
+    Implemented rules:
+      - Phantom Touch: if an actor with the Phantom Touch blessing contributes
+        one or more base hits during this acting tick, add exactly +1 hit for
+        that same actor.
+
+    Notes:
+      - Proc chance is ignored (deterministic).
+      - Cooldowns are ignored for now (stateless behavior).
+      - Reserved contributor key: "REFLECT" (reflect-style shield hits).
+    """
+
+    # Map for quick lookup.
+    by_name: dict[str, Actor] = {a.name: a for a in actors}
+
+    extra: dict[str, int] = {}
+    for contributor, hits in base_hits.items():
+        if contributor == "REFLECT":
+            continue
+        try:
+            base = int(hits)
+        except Exception:
+            continue
+        if base <= 0:
+            continue
+
+        actor = by_name.get(contributor)
+        if actor is None:
+            continue
+        phantom_cfg = actor.blessings.get("phantom_touch")
+        if isinstance(phantom_cfg, dict):
+            extra[contributor] = int(extra.get(contributor, 0)) + 1
+
+    return extra
+
+
 class MasteryProcRequester:
     """Inspectable, callable mastery proc requester.
 
@@ -1168,10 +1215,12 @@ def step_tick(
     elif hit_counts_by_actor is not None:
         current_hits = hit_counts_by_actor
 
-    if current_hits is not None and hit_contribution_resolver is not None:
+    if current_hits is not None:
+        resolver = hit_contribution_resolver or _default_hit_contribution_resolver
+
         # Engine-owned seam: allow rule components to contribute additional hits
         # (e.g., Phantom Touch, Counterattack, Ally Attack, Faultless Defense).
-        extra = hit_contribution_resolver(
+        extra = resolver(
             acting_actor=best,
             actors=actors,
             base_hits=dict(current_hits),

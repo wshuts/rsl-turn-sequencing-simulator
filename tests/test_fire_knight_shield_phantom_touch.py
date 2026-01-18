@@ -61,7 +61,7 @@ def test_phantom_touch_adds_one_extra_shield_hit() -> None:
         actors,
         event_sink=sink,
         hit_counts_by_actor={
-            ch.name: base_hits + 1  # +1 from Phantom Touch
+            ch.name: base_hits
         },
     )
 
