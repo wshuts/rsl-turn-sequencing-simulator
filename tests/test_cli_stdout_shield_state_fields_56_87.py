@@ -110,6 +110,8 @@ def test_cli_stdout_rows_56_87_match_expected_fields(capsys) -> None:
         "run",
         "--battle",
         "samples/demo_battle_spec_track_shield_state.json",
+        "--champion-defs",
+        "data/champions_fire_knight_team.json",
         "--boss-actor",
         "Fire Knight",
         "--stop-after-boss-turns",

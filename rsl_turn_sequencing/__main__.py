@@ -30,13 +30,13 @@ def _demo_actors() -> list[Actor]:
     return [a1, boss]
 
 
-def _actors_from_battle_spec(spec) -> list[Actor]:
+def _actors_from_battle_spec(spec, *, champion_definitions_path: Path | None = None) -> list[Actor]:
     """Build actors from a battle spec.
 
     This is a compatibility shim. Actor construction is engine-owned
     (including dataset-derived state such as blessings).
     """
-    return build_actors_from_battle_spec(spec)
+    return build_actors_from_battle_spec(spec, champion_definitions_path=champion_definitions_path)
 
 
 def _consume_next_skill(
@@ -405,7 +405,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         battle_path = Path(str(args.battle))
         try:
             spec = load_battle_spec(battle_path)
-            actors = _actors_from_battle_spec(spec)
+            champion_defs_path = Path(str(args.champion_defs)) if getattr(args, "champion_defs", None) else None
+            actors = _actors_from_battle_spec(spec, champion_definitions_path=champion_defs_path)
             hits_by_actor = _load_hits_by_actor(battle_path)  # legacy fallback
         except InputFormatError as e:
             print(f"ERROR: invalid battle spec: {e}", file=sys.stderr)
@@ -488,6 +489,16 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="Run a simulation and print Boss Turn Frames.")
     run.add_argument("--demo", action="store_true", help="Run the built-in deterministic demo roster.")
     run.add_argument("--battle", type=str, help="Run a battle spec JSON.")
+    run.add_argument(
+        "--champion-defs",
+        dest="champion_defs",
+        type=str,
+        default=None,
+        help=(
+            "Optional: path to champion definitions JSON (blessings, etc.). "
+            "When provided, the engine hydrates Actor.blessings from this file."
+        ),
+    )
     run.add_argument("--input", type=str, help="Render an existing event stream JSON.")
     run.add_argument("--ticks", type=int, default=50, help="Safety cap: max ticks to simulate.")
     run.add_argument("--boss-actor", type=str, default="Boss", help="Actor name used to close frames.")
