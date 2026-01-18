@@ -22,7 +22,7 @@ _ROW_RE = re.compile(
     ^\s*(?P<row>\d+)\s*:\s*
     \[\s*(?P<before_val>\d+)\s+(?P<before_state>[A-Z_]+)\s*\]\s*
     (?P<actor>.+?)\s*
-    \{\s*(?P<skill>[A-Z]_[A-Z0-9]+)\s*\}\s*
+    \{\s*(?P<skill>(?:[A-Z]_[A-Z0-9]+|[A-Z]\d+))\s*\}\s*
     \[\s*(?P<after_val>\d+)\s+(?P<after_state>[A-Z_]+)\s*\]\s*$
     """,
     re.VERBOSE,
