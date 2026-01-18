@@ -22,6 +22,7 @@ def apply_skill_buffs(
     Current scope:
       - Slice 2: Mikage Base A3 (B_A3): place Increase ATK and Increase C.DMG on all allies for 2 turns.
       - Slice 7: Mikage Base A2 (B_A2): increase ally BUFF durations by +1 (and emit duration-change events).
+      - Fire Knight shield-state sample: Martyr A2 (A2): place Increase DEF on all allies for 2 turns.
     """
     if not skill_id:
         return
@@ -29,10 +30,6 @@ def apply_skill_buffs(
     holder = (actor_name or "").strip()
     holder_l = holder.lower()
     s = (skill_id or "").strip().upper()
-
-    # Mikage-only provider surface (current scope): only model select Mikage skill behaviors.
-    if holder_l not in {"mikage", "lady mikage"}:
-        return
 
     actor = next((a for a in actors if a.name == holder), None)
     if actor is None:
@@ -48,6 +45,56 @@ def apply_skill_buffs(
 
     # Allies: this simulator currently models a single allied team vs a boss.
     allies: list[Actor] = [a for a in actors if not getattr(a, "is_boss", False)]
+
+    # --- Martyr ---
+    # Fire Knight shield-state sample: Martyr A2 places Increase DEF on all allies.
+    # This BUFF state is used by engine-owned hit contributors (e.g., Faultless Defense reflect).
+    if holder_l == "martyr" and s == "A2":
+        for target in allies:
+            effect_id = "increase_def"
+            instance_id = f"fx_{holder}_{s}_{seq_index}_{target.name}_{effect_id}"
+            inst = EffectInstance(
+                instance_id=instance_id,
+                effect_id=effect_id,
+                effect_kind="BUFF",
+                placed_by=holder,
+                duration=2,
+                applied_turn=applied_turn,
+            )
+            target.active_effects.append(inst)
+
+            if event_sink is not None:
+                event_sink.emit(
+                    EventType.EFFECT_APPLIED,
+                    actor=holder,
+                    instance_id=inst.instance_id,
+                    effect_id=inst.effect_id,
+                    effect_kind=inst.effect_kind,
+                    owner=target.name,
+                    placed_by=inst.placed_by,
+                    duration=inst.duration,
+                    source_skill_id=s,
+                    source_sequence_index=seq_index,
+                )
+
+                event_sink.emit(
+                    EventType.EFFECT_DURATION_SET,
+                    actor=holder,
+                    instance_id=inst.instance_id,
+                    effect_id=inst.effect_id,
+                    effect_kind=inst.effect_kind,
+                    owner=target.name,
+                    placed_by=inst.placed_by,
+                    duration=inst.duration,
+                    reason="initial_application",
+                    boundary="placement",
+                )
+        return
+
+    # --- Mikage ---
+    # Mikage-only provider surface (current scope): only model select Mikage skill behaviors.
+    if holder_l not in {"mikage", "lady mikage"}:
+        return
 
     # Slice 2: Mikage Base A3 -> team buffs
     if s == "B_A3":

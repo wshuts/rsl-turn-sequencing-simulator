@@ -83,6 +83,9 @@ def _default_hit_contribution_resolver(
       - Phantom Touch: if an actor with the Phantom Touch blessing contributes
         one or more base hits during this acting tick, add exactly +1 hit for
         that same actor.
+      - Faultless Defense (reflect): when the boss attacks, for each ally that
+        is under an Increase DEF buff placed by the blessing holder, emit an
+        additional reflect-style shield hit.
 
     Notes:
       - Proc chance is ignored (deterministic).
@@ -94,6 +97,44 @@ def _default_hit_contribution_resolver(
     by_name: dict[str, Actor] = {a.name: a for a in actors}
 
     extra: dict[str, int] = {}
+
+    # Faultless Defense: reflect-style hits against the boss shield.
+    # We model this as a reserved contributor bucket "REFLECT".
+    if bool(getattr(acting_actor, "is_boss", False)):
+        allies = [a for a in actors if not bool(getattr(a, "is_boss", False))]
+        reflect_hits = 0
+
+        for holder in allies:
+            fd_cfg = holder.blessings.get("faultless_defense")
+            if not isinstance(fd_cfg, dict):
+                continue
+            modeling = fd_cfg.get("modeling")
+            if not isinstance(modeling, dict):
+                continue
+            emits = modeling.get("emits_hit_event")
+            if not isinstance(emits, dict):
+                continue
+            try:
+                per_target = int(emits.get("count", 1))
+            except Exception:
+                per_target = 1
+            if per_target <= 0:
+                continue
+
+            # Determine which allies qualify: Increase DEF buff on target placed by holder.
+            for target in allies:
+                for fx in getattr(target, "active_effects", []) or []:
+                    if getattr(fx, "effect_kind", None) != "BUFF":
+                        continue
+                    if getattr(fx, "effect_id", None) != "increase_def":
+                        continue
+                    if getattr(fx, "placed_by", None) != holder.name:
+                        continue
+                    reflect_hits += per_target
+                    break
+
+        if reflect_hits > 0:
+            extra["REFLECT"] = int(extra.get("REFLECT", 0)) + int(reflect_hits)
     for contributor, hits in base_hits.items():
         if contributor == "REFLECT":
             continue
