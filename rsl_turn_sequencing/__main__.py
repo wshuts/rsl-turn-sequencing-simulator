@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from rsl_turn_sequencing.engine import run_ticks
+from rsl_turn_sequencing.engine import build_actors_from_battle_spec, run_ticks
 from rsl_turn_sequencing.event_sink import InMemoryEventSink
 from rsl_turn_sequencing.models import Actor
 from rsl_turn_sequencing.reporting import derive_turn_rows, group_rows_into_boss_frames
@@ -31,41 +31,12 @@ def _demo_actors() -> list[Actor]:
 
 
 def _actors_from_battle_spec(spec) -> list[Actor]:
-    actors: list[Actor] = []
-    for a in spec.actors:
-        speed = float(a.speed)
-        # v0: if a form is provided, allow a speed override via speed_by_form.
-        if a.form_start and a.speed_by_form and a.form_start in a.speed_by_form:
-            speed = float(a.speed_by_form[a.form_start])
-        actors.append(
-            Actor(
-                a.name,
-                speed,
-                faction=a.faction,
-                skill_sequence=list(a.skill_sequence) if a.skill_sequence is not None else None,
-            )
-        )
+    """Build actors from a battle spec.
 
-    boss_speed = float(spec.boss.speed)
-    if spec.boss.form_start and spec.boss.speed_by_form and spec.boss.form_start in spec.boss.speed_by_form:
-        boss_speed = float(spec.boss.speed_by_form[spec.boss.form_start])
-
-    boss_shield_max = spec.boss.shield_max
-    boss_shield_start = int(boss_shield_max) if boss_shield_max is not None else 0
-
-    actors.append(
-        Actor(
-            spec.boss.name,
-            boss_speed,
-            is_boss=True,
-            shield=boss_shield_start,
-            shield_max=boss_shield_max,
-            faction=spec.boss.faction,
-            skill_sequence=list(spec.boss.skill_sequence) if spec.boss.skill_sequence is not None else None,
-        )
-    )
-
-    return actors
+    This is a compatibility shim. Actor construction is engine-owned
+    (including dataset-derived state such as blessings).
+    """
+    return build_actors_from_battle_spec(spec)
 
 
 def _consume_next_skill(

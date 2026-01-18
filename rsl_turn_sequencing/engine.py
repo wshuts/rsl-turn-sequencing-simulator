@@ -114,6 +114,91 @@ def _default_hit_contribution_resolver(
     return extra
 
 
+
+
+def build_actors_from_battle_spec(
+    spec: object,
+    *,
+    champion_definitions_path: Path | None = None,
+) -> list[Actor]:
+    """Build Actor instances from a loaded battle spec.
+
+    This is an engine-owned construction step.
+
+    Blessings:
+      - When champion_definitions_path is provided, blessings are hydrated from
+        that JSON file (matched by champion name, case-insensitive).
+      - When champion_definitions_path is None, no blessings are applied.
+
+    The battle spec is produced by rsl_turn_sequencing.stream_io.load_battle_spec.
+    """
+
+    champion_defs: dict[str, dict[str, Any]] = {}
+    if champion_definitions_path is not None:
+        try:
+            raw = json.loads(Path(champion_definitions_path).read_text(encoding='utf-8'))
+            if isinstance(raw, dict) and isinstance(raw.get('champions'), list):
+                for c in raw['champions']:
+                    if not isinstance(c, dict):
+                        continue
+                    name = c.get('name')
+                    if isinstance(name, str) and name.strip():
+                        champion_defs[name.strip().lower()] = c
+        except Exception:
+            champion_defs = {}
+
+    def _blessings_for(name: str) -> dict[str, Any]:
+        if not champion_defs:
+            return {}
+        c = champion_defs.get((name or '').strip().lower())
+        if not isinstance(c, dict):
+            return {}
+        b = c.get('blessings')
+        return dict(b) if isinstance(b, dict) else {}
+
+    actors: list[Actor] = []
+
+    for a in getattr(spec, 'actors', []):
+        speed = float(getattr(a, 'speed'))
+        form_start = getattr(a, 'form_start', None)
+        speed_by_form = getattr(a, 'speed_by_form', None)
+        if form_start and isinstance(speed_by_form, dict) and form_start in speed_by_form:
+            speed = float(speed_by_form[form_start])
+
+        actor = Actor(
+            getattr(a, 'name'),
+            speed,
+            faction=getattr(a, 'faction', None),
+            skill_sequence=list(getattr(a, 'skill_sequence')) if getattr(a, 'skill_sequence', None) is not None else None,
+        )
+        actor.blessings = _blessings_for(actor.name)
+        actors.append(actor)
+
+    boss = getattr(spec, 'boss')
+    boss_speed = float(getattr(boss, 'speed'))
+    boss_form_start = getattr(boss, 'form_start', None)
+    boss_speed_by_form = getattr(boss, 'speed_by_form', None)
+    if boss_form_start and isinstance(boss_speed_by_form, dict) and boss_form_start in boss_speed_by_form:
+        boss_speed = float(boss_speed_by_form[boss_form_start])
+
+    boss_shield_max = getattr(boss, 'shield_max', None)
+    boss_shield_start = int(boss_shield_max) if boss_shield_max is not None else 0
+
+    boss_actor = Actor(
+        getattr(boss, 'name'),
+        boss_speed,
+        is_boss=True,
+        shield=boss_shield_start,
+        shield_max=boss_shield_max,
+        faction=getattr(boss, 'faction', None),
+        skill_sequence=list(getattr(boss, 'skill_sequence')) if getattr(boss, 'skill_sequence', None) is not None else None,
+    )
+    boss_actor.blessings = _blessings_for(boss_actor.name)
+    actors.append(boss_actor)
+
+    return actors
+
+
 class MasteryProcRequester:
     """Inspectable, callable mastery proc requester.
 
