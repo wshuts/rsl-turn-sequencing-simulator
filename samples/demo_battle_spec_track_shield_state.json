@@ -24,6 +24,15 @@
             ]
           }
         }
+      },
+      "damage_received": {
+        "on_step": {
+          "3": {
+            "damaged": [
+              "Tomb Lord"
+            ]
+          }
+        }
       }
     }
   },
