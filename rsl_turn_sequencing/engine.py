@@ -37,6 +37,36 @@ class ExpirationResolver(Protocol):
     def __call__(self, ctx: dict[str, Any]) -> list[dict[str, Any]]: ...
 
 
+class HitContributionResolver(Protocol):
+    """Resolve additional shield-hit contributions for the current acting tick.
+
+    The engine owns shield math. This resolver is a DI seam for rule-driven
+    hit contributors that are NOT intrinsic to a single actor's skill.
+
+    Examples (modeled by dedicated rule components):
+      - Phantom Touch procs
+      - Faultless Defense reflect hits
+      - Counterattack hits
+      - Ally-attack (join attack) contributions
+
+    Contract:
+      - MUST return a mapping of contributor -> hit_count.
+      - MUST NOT mutate engine state.
+      - SHOULD return {} when no additional hits apply.
+      - Reserved contributor key: "REFLECT" (reflect-style shield hits).
+    """
+
+    def __call__(
+        self,
+        *,
+        acting_actor: "Actor",
+        actors: list["Actor"],
+        base_hits: dict[str, int],
+        turn_counter: int,
+        tick: int,
+    ) -> dict[str, int]: ...
+
+
 class MasteryProcRequester:
     """Inspectable, callable mastery proc requester.
 
@@ -912,6 +942,7 @@ def step_tick(
         snapshot_capture: set[int] | None = None,
         hit_counts_by_actor: dict[str, int] | None = None,
         hit_provider: callable | None = None,
+        hit_contribution_resolver: HitContributionResolver | None = None,
         # Dependency-injection seam: phase-aware expiration resolver.
         #
         # Back-compat: `expiration_injector` is kept as an alias, but the semantic
@@ -1131,11 +1162,33 @@ def step_tick(
             )
 
     # Boss shield hit-counter semantics (C2): Apply turn-caused hits before TURN_END snapshot.
-    current_hits = None
+    current_hits: dict[str, int] | None = None
     if hit_provider is not None:
         current_hits = hit_provider(best.name) or {}
     elif hit_counts_by_actor is not None:
         current_hits = hit_counts_by_actor
+
+    if current_hits is not None and hit_contribution_resolver is not None:
+        # Engine-owned seam: allow rule components to contribute additional hits
+        # (e.g., Phantom Touch, Counterattack, Ally Attack, Faultless Defense).
+        extra = hit_contribution_resolver(
+            acting_actor=best,
+            actors=actors,
+            base_hits=dict(current_hits),
+            turn_counter=int(turn_counter),
+            tick=int(getattr(event_sink, "current_tick", 0)) if event_sink is not None else 0,
+        )
+        if isinstance(extra, dict) and extra:
+            merged: dict[str, int] = dict(current_hits)
+            for k, v in extra.items():
+                try:
+                    inc = int(v)
+                except Exception:
+                    continue
+                if inc == 0:
+                    continue
+                merged[k] = int(merged.get(k, 0)) + inc
+            current_hits = merged
     if current_hits is not None:
         boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
         if boss is not None:
