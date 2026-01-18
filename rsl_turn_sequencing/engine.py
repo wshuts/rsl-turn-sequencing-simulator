@@ -98,10 +98,22 @@ def _default_hit_contribution_resolver(
 
     extra: dict[str, int] = {}
 
-    # Faultless Defense: reflect-style hits against the boss shield.
-    # We model this as a reserved contributor bucket "REFLECT".
+    # Boss-turn reactive contributors (shield hits applied during boss turns).
     if bool(getattr(acting_actor, "is_boss", False)):
         allies = [a for a in actors if not bool(getattr(a, "is_boss", False))]
+
+        # Determine which boss skill was just consumed (when driven by a
+        # skill_sequence). This enables minimal, deterministic distinctions
+        # between AoE boss turns (A2) and single-target boss turns (A1).
+        try:
+            bseq = getattr(acting_actor, "skill_sequence", None) or []
+            bcursor = int(getattr(acting_actor, "skill_sequence_cursor", 0))
+            boss_last_skill = str(bseq[bcursor - 1]) if bcursor > 0 and bcursor <= len(bseq) else ""
+        except Exception:
+            boss_last_skill = ""
+
+        # Faultless Defense: reflect-style hits against the boss shield.
+        # We model this as a reserved contributor bucket "REFLECT".
         reflect_hits = 0
 
         for holder in allies:
@@ -135,6 +147,81 @@ def _default_hit_contribution_resolver(
 
         if reflect_hits > 0:
             extra["REFLECT"] = int(extra.get("REFLECT", 0)) + int(reflect_hits)
+
+        # Counterattack: when the boss attacks, allies with a Counterattack BUFF
+        # respond with an A1. We model this as additional normal hits contributed
+        # by each qualifying ally.
+        #
+        # This is intentionally a shield-math-only approximation (no ordering or
+        # per-hit event emission yet).
+        # For boss A1 (single-target), only one ally counterattacks.
+        # For boss A2 (AoE), all allies counterattack.
+        if boss_last_skill.strip().upper() == "A1" and allies:
+            try:
+                def _a1(a: Actor) -> int:
+                    return int(getattr(a, "_a1_hits", 1))
+                counterattack_targets = [max(allies, key=lambda a: (_a1(a), a.speed, a.name))]
+            except Exception:
+                counterattack_targets = [allies[0]]
+        else:
+            counterattack_targets = list(allies)
+
+        for target in counterattack_targets:
+            has_counterattack = False
+            for fx in getattr(target, "active_effects", []) or []:
+                if getattr(fx, "effect_kind", None) != "BUFF":
+                    continue
+                if getattr(fx, "effect_id", None) != "counterattack":
+                    continue
+                has_counterattack = True
+                break
+            if not has_counterattack:
+                continue
+
+            # Hydrated from champion definitions when available.
+            try:
+                a1_hits = int(getattr(target, "_a1_hits", 1))
+            except Exception:
+                a1_hits = 1
+            if a1_hits <= 0:
+                continue
+            extra[target.name] = int(extra.get(target.name, 0)) + int(a1_hits)
+
+            # Phantom Touch can also proc on counterattacks. We treat the
+            # counterattack A1 as a normal hit contribution for the purpose of
+            # deterministic Phantom Touch (+1) modeling.
+            phantom_cfg = target.blessings.get("phantom_touch")
+            if isinstance(phantom_cfg, dict):
+                extra[target.name] = int(extra.get(target.name, 0)) + 1
+
+    # Mikage Ally Attack (minimal): Mikage's narrated B_A3 is modeled as an
+    # ally-attack style contribution that does not appear as direct hits on the
+    # Mikage skill itself in the FK dataset.
+    #
+    # Deterministic selection: choose the ally (excluding Mikage and the boss)
+    # with the highest A1 hit count.
+    try:
+        seq = getattr(acting_actor, "skill_sequence", None) or []
+        cursor = int(getattr(acting_actor, "skill_sequence_cursor", 0))
+        last_skill = str(seq[cursor - 1]) if cursor > 0 and cursor <= len(seq) else ""
+    except Exception:
+        last_skill = ""
+
+    if (acting_actor.name or "").strip().lower() in {"mikage", "lady mikage"} and last_skill.strip().upper() == "B_A3":
+        candidates = [a for a in actors if (not bool(getattr(a, "is_boss", False))) and a is not acting_actor]
+        if candidates:
+            def _a1(a: Actor) -> int:
+                try:
+                    return int(getattr(a, "_a1_hits", 1))
+                except Exception:
+                    return 1
+            joiner = max(candidates, key=lambda a: (_a1(a), a.speed, a.name))
+            hits = max(0, _a1(joiner))
+            if hits > 0:
+                extra[joiner.name] = int(extra.get(joiner.name, 0)) + hits
+                phantom_cfg = joiner.blessings.get("phantom_touch")
+                if isinstance(phantom_cfg, dict):
+                    extra[joiner.name] = int(extra.get(joiner.name, 0)) + 1
     for contributor, hits in base_hits.items():
         if contributor == "REFLECT":
             continue
@@ -188,14 +275,57 @@ def build_actors_from_battle_spec(
         except Exception:
             champion_defs = {}
 
+    def _champion_def_for(name: str) -> dict[str, Any] | None:
+        if not champion_defs:
+            return None
+        c = champion_defs.get((name or "").strip().lower())
+        return c if isinstance(c, dict) else None
+
     def _blessings_for(name: str) -> dict[str, Any]:
         if not champion_defs:
             return {}
-        c = champion_defs.get((name or '').strip().lower())
+        c = _champion_def_for(name)
         if not isinstance(c, dict):
             return {}
         b = c.get('blessings')
         return dict(b) if isinstance(b, dict) else {}
+
+    def _a1_hits_for(name: str) -> int:
+        """Best-effort A1 hit count from champion definitions.
+
+        Used for counterattack shield-hit contributions during boss turns.
+        If champion definitions are not present or malformed, default to 1.
+        """
+        c = _champion_def_for(name)
+        if not isinstance(c, dict):
+            return 1
+
+        # Mikage / multi-form champions: attempt to use the declared starting form.
+        forms = c.get("forms")
+        if isinstance(forms, dict):
+            defaults = c.get("defaults")
+            starting_form = None
+            if isinstance(defaults, dict):
+                starting_form = defaults.get("starting_form")
+            if not isinstance(starting_form, str) or not starting_form:
+                starting_form = "base"
+
+            form_block = forms.get(starting_form)
+            if isinstance(form_block, dict):
+                skills = form_block.get("skills")
+                if isinstance(skills, dict):
+                    a1 = skills.get("A1")
+                    if isinstance(a1, dict) and isinstance(a1.get("hits"), int):
+                        return int(a1.get("hits"))
+
+        # Single-form champions.
+        skills = c.get("skills")
+        if isinstance(skills, dict):
+            a1 = skills.get("A1")
+            if isinstance(a1, dict) and isinstance(a1.get("hits"), int):
+                return int(a1.get("hits"))
+
+        return 1
 
     actors: list[Actor] = []
 
@@ -213,6 +343,8 @@ def build_actors_from_battle_spec(
             skill_sequence=list(getattr(a, 'skill_sequence')) if getattr(a, 'skill_sequence', None) is not None else None,
         )
         actor.blessings = _blessings_for(actor.name)
+        # Hydrate A1 hits for counterattack modeling.
+        actor._a1_hits = _a1_hits_for(actor.name)  # type: ignore[attr-defined]
         actors.append(actor)
 
     boss = getattr(spec, 'boss')
@@ -235,6 +367,7 @@ def build_actors_from_battle_spec(
         skill_sequence=list(getattr(boss, 'skill_sequence')) if getattr(boss, 'skill_sequence', None) is not None else None,
     )
     boss_actor.blessings = _blessings_for(boss_actor.name)
+    boss_actor._a1_hits = _a1_hits_for(boss_actor.name)  # type: ignore[attr-defined]
     actors.append(boss_actor)
 
     return actors
@@ -1340,6 +1473,17 @@ def step_tick(
         current_hits = hit_provider(best.name) or {}
     elif hit_counts_by_actor is not None:
         current_hits = hit_counts_by_actor
+
+    # Boss skill hit counts represent attacks *from* the boss and must not be
+    # treated as shield-hit contributions against the boss. Any shield hits
+    # that occur during a boss turn are modeled via engine-owned contributors
+    # (e.g., Counterattack, Faultless Defense reflect).
+    if (
+        current_hits is not None
+        and bool(getattr(best, "is_boss", False))
+        and hit_provider is not None
+    ):
+        current_hits = {}
 
     if current_hits is not None:
         resolver = hit_contribution_resolver or _default_hit_contribution_resolver

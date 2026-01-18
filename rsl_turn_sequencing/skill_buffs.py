@@ -47,48 +47,50 @@ def apply_skill_buffs(
     allies: list[Actor] = [a for a in actors if not getattr(a, "is_boss", False)]
 
     # --- Martyr ---
-    # Fire Knight shield-state sample: Martyr A2 places Increase DEF on all allies.
-    # This BUFF state is used by engine-owned hit contributors (e.g., Faultless Defense reflect).
+    # Fire Knight shield-state sample: Martyr's opening buff is modeled as A2 in the narrated spec.
+    # We materialize the minimal BUFF state needed for shield-hit contributors:
+    #   - Increase DEF (for Faultless Defense)
+    #   - Counterattack (for counterattack reactive hits)
     if holder_l == "martyr" and s == "A2":
         for target in allies:
-            effect_id = "increase_def"
-            instance_id = f"fx_{holder}_{s}_{seq_index}_{target.name}_{effect_id}"
-            inst = EffectInstance(
-                instance_id=instance_id,
-                effect_id=effect_id,
-                effect_kind="BUFF",
-                placed_by=holder,
-                duration=2,
-                applied_turn=applied_turn,
-            )
-            target.active_effects.append(inst)
-
-            if event_sink is not None:
-                event_sink.emit(
-                    EventType.EFFECT_APPLIED,
-                    actor=holder,
-                    instance_id=inst.instance_id,
-                    effect_id=inst.effect_id,
-                    effect_kind=inst.effect_kind,
-                    owner=target.name,
-                    placed_by=inst.placed_by,
-                    duration=inst.duration,
-                    source_skill_id=s,
-                    source_sequence_index=seq_index,
+            for effect_id in ("increase_def", "counterattack"):
+                instance_id = f"fx_{holder}_{s}_{seq_index}_{target.name}_{effect_id}"
+                inst = EffectInstance(
+                    instance_id=instance_id,
+                    effect_id=effect_id,
+                    effect_kind="BUFF",
+                    placed_by=holder,
+                    duration=3,
+                    applied_turn=applied_turn,
                 )
+                target.active_effects.append(inst)
 
-                event_sink.emit(
-                    EventType.EFFECT_DURATION_SET,
-                    actor=holder,
-                    instance_id=inst.instance_id,
-                    effect_id=inst.effect_id,
-                    effect_kind=inst.effect_kind,
-                    owner=target.name,
-                    placed_by=inst.placed_by,
-                    duration=inst.duration,
-                    reason="initial_application",
-                    boundary="placement",
-                )
+                if event_sink is not None:
+                    event_sink.emit(
+                        EventType.EFFECT_APPLIED,
+                        actor=holder,
+                        instance_id=inst.instance_id,
+                        effect_id=inst.effect_id,
+                        effect_kind=inst.effect_kind,
+                        owner=target.name,
+                        placed_by=inst.placed_by,
+                        duration=inst.duration,
+                        source_skill_id=s,
+                        source_sequence_index=seq_index,
+                    )
+
+                    event_sink.emit(
+                        EventType.EFFECT_DURATION_SET,
+                        actor=holder,
+                        instance_id=inst.instance_id,
+                        effect_id=inst.effect_id,
+                        effect_kind=inst.effect_kind,
+                        owner=target.name,
+                        placed_by=inst.placed_by,
+                        duration=inst.duration,
+                        reason="initial_application",
+                        boundary="placement",
+                    )
         return
 
     # --- Mikage ---
