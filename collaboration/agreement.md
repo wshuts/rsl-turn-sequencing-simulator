@@ -29,6 +29,18 @@ _Applies unless explicitly overridden in this chat._
 - No reliance on prior chats unless **summarized here**.
 - Ambiguity triggers clarification, not invention.
 
+## Terminology Boundary (Collaboration vs Repository)
+
+- Terms such as **epic**, **slice**, **phase**, or similar planning abstractions are used **only within our collaboration** to organize work and discussion.
+- These terms **must not appear** in:
+  - Test names
+  - Production code
+  - Public interfaces
+  - Repo-facing documentation
+- Tests and code must be named strictly for **observable behavior**, **domain meaning**, or **mechanical intent**.
+  - Names should describe *what happens*, *what state changes*, or *what invariant is enforced*.
+- Planning terminology exists to help us reason; repository artifacts must remain **self-explanatory without that context**.
+
 ## Execution Constraints
 - Keep outputs sized to work within browser limits.
 - Very long streams of content must be avoided.
