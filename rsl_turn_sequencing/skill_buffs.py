@@ -60,7 +60,7 @@ def apply_skill_buffs(
                     effect_id=effect_id,
                     effect_kind="BUFF",
                     placed_by=holder,
-                    duration=3,
+                    duration=2,
                     applied_turn=applied_turn,
                 )
                 target.active_effects.append(inst)
