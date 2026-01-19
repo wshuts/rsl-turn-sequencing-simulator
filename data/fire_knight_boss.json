@@ -3,10 +3,10 @@
   "context": {
     "boss": "Fire Knight",
     "content": "boss_definition",
-    "shield_model": "hit_counter",
     "difficulty": "hard_10",
+    "shield_model": "hit_counter",
     "notes": [
-      "This file is intentionally simplified: it defines boss skills + any boss-only mechanics we need for the simulator.",
+      "Simplified boss definition: only boss mechanics + A1/A2 skill metadata required by the simulator.",
       "Champion definitions remain in champions_fire_knight_team.json."
     ]
   },
@@ -21,46 +21,64 @@
         "starting_hits": 21,
         "notes": [
           "The shield is represented as a counter of remaining hits.",
-          "Your engine currently tracks this as shield_state (e.g., 21 -> 20 -> ...)."
+          "When hits_remaining > 0, the shield is considered closed. When hits_remaining == 0, the shield is open."
         ]
       },
       "debuff_blocking": {
         "blocked_when_shield_closed": true,
         "allowed_when_shield_open": true,
         "notes": [
-          "Deterministic model: we do not simulate ACC vs RES.",
-          "If the shield is closed, attempted debuffs are not placed.",
-          "If the shield is open, attempted debuffs are placed."
+          "Deterministic model: we do not simulate ACC vs RES."
         ]
       }
     },
     "skills": {
       "A1": {
-        "key": "A1",
-        "name": "A1",
-        "hits": 1,
-        "targeting": "single",
-        "notes": [
-          "Placeholder skill name/text."
-        ]
+        "slot": "A1",
+        "name": "Crushing Firestrike",
+        "attacks": 1,
+        "targeting": "all_enemies",
+        "multiplier": {
+          "formula": "4*ATK"
+        },
+        "effects": [
+          {
+            "type": "destroy_max_hp",
+            "percent_of_damage_dealt": 15,
+            "ignore_shield_buffs_when_destroying": true
+          }
+        ],
+        "text": "Attacks all enemies. Destroys enemy MAX HP by 15% of the damage dealt. When destroying MAX HP, will ignore [Shield] buffs."
       },
       "A2": {
-        "key": "A2",
-        "name": "A2",
-        "hits": 1,
-        "targeting": "aoe",
-        "notes": [
-          "Placeholder skill name/text."
-        ]
-      },
-      "A3": {
-        "key": "A3",
-        "name": "A3",
-        "hits": 1,
-        "targeting": "aoe",
-        "notes": [
-          "Placeholder skill name/text."
-        ]
+        "slot": "A2",
+        "name": "Corrupting Blaze",
+        "attacks": 1,
+        "targeting": "all_enemies",
+        "cooldown_turns": 5,
+        "multiplier": {
+          "formula": "5*ATK"
+        },
+        "effects": [
+          {
+            "type": "debuff",
+            "debuff": "decrease_spd",
+            "chance_percent": 30,
+            "duration_turns": 3
+          },
+          {
+            "type": "debuff",
+            "debuff": "decrease_def",
+            "chance_percent": 60,
+            "duration_turns": 3
+          },
+          {
+            "type": "destroy_max_hp",
+            "percent_of_damage_dealt": 15,
+            "ignore_shield_buffs_when_destroying": false
+          }
+        ],
+        "text": "Attacks all enemies. Places a 30% [Decrease SPD] debuff and a 60% [Decrease DEF] debuff for 3 turns. Destroys enemy MAX HP by 15% of the damage dealt."
       }
     }
   }
