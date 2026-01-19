@@ -7,7 +7,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -45,6 +44,8 @@ def test_mastery_proc_is_between_effect_expired_and_turn_end_in_events_out() -> 
             "run",
             "--battle",
             str(battle_path),
+            "--champion-defs",
+            "data/champions_fire_knight_team.json",
             "--boss-actor",
             "Fire Knight",
             "--stop-after-boss-turns",
@@ -82,12 +83,12 @@ def test_mastery_proc_is_between_effect_expired_and_turn_end_in_events_out() -> 
                 f"Index: {i}\n"
                 f"Prev type: {prev_type}\n"
                 f"Current: {events[i]}\n"
-                f"Prev: {events[i-1]}\n"
+                f"Prev: {events[i - 1]}\n"
             )
             assert next_type == "TURN_END", (
                 "Expected the event immediately after MASTERY_PROC to be TURN_END.\n"
                 f"Index: {i}\n"
                 f"Next type: {next_type}\n"
                 f"Current: {events[i]}\n"
-                f"Next: {events[i+1]}\n"
+                f"Next: {events[i + 1]}\n"
             )

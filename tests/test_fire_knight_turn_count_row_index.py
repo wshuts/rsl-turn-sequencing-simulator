@@ -30,6 +30,8 @@ def test_fire_knight_sixth_boss_turn_ends_on_row_index_98(capsys) -> None:
         "run",
         "--battle",
         "samples/demo_battle_spec_track_shield_state.json",
+        "--champion-defs",
+        "data/champions_fire_knight_team.json",
         "--boss-actor",
         "Fire Knight",
         "--stop-after-boss-turns",

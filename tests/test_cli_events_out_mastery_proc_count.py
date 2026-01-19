@@ -7,7 +7,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -44,6 +43,8 @@ def test_cli_events_out_contains_five_mastery_proc_events_for_fire_knight_sample
             "run",
             "--battle",
             str(battle_path),
+            "--champion-defs",
+            "data/champions_fire_knight_team.json",
             "--boss-actor",
             "Fire Knight",
             "--stop-after-boss-turns",
