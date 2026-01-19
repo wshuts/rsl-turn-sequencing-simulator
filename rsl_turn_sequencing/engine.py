@@ -154,9 +154,14 @@ def _default_hit_contribution_resolver(
         #
         # This is intentionally a shield-math-only approximation (no ordering or
         # per-hit event emission yet).
-        # For boss A1 (single-target), only one ally counterattacks.
-        # For boss A2 (AoE), all allies counterattack.
-        if boss_last_skill.strip().upper() == "A1" and allies:
+        # Counterattack targeting scope depends on the boss's attack pattern.
+        # Fire Knight's A1 and A2 both "attack all enemies" per data/fire_knight_boss.json,
+        # so allies with Counterattack are *independently* eligible to respond.
+        #
+        # We keep the old "boss A1 is single-target" shortcut only for non-Fire-Knight
+        # bosses until we have data-driven targeting for other encounters.
+        is_fire_knight = "fire knight" in acting_actor.name.lower()
+        if (not is_fire_knight) and boss_last_skill.strip().upper() == "A1" and allies:
             try:
                 def _a1(a: Actor) -> int:
                     return int(getattr(a, "_a1_hits", 1))
