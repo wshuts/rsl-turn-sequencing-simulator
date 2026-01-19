@@ -1,0 +1,67 @@
+{
+  "version": "2026-01-18",
+  "context": {
+    "boss": "Fire Knight",
+    "content": "boss_definition",
+    "shield_model": "hit_counter",
+    "difficulty": "hard_10",
+    "notes": [
+      "This file is intentionally simplified: it defines boss skills + any boss-only mechanics we need for the simulator.",
+      "Champion definitions remain in champions_fire_knight_team.json."
+    ]
+  },
+  "boss": {
+    "id": "fire_knight",
+    "name": "Fire Knight",
+    "kind": "boss",
+    "mechanics": {
+      "shield": {
+        "enabled": true,
+        "model": "hit_counter",
+        "starting_hits": 21,
+        "notes": [
+          "The shield is represented as a counter of remaining hits.",
+          "Your engine currently tracks this as shield_state (e.g., 21 -> 20 -> ...)."
+        ]
+      },
+      "debuff_blocking": {
+        "blocked_when_shield_closed": true,
+        "allowed_when_shield_open": true,
+        "notes": [
+          "Deterministic model: we do not simulate ACC vs RES.",
+          "If the shield is closed, attempted debuffs are not placed.",
+          "If the shield is open, attempted debuffs are placed."
+        ]
+      }
+    },
+    "skills": {
+      "A1": {
+        "key": "A1",
+        "name": "A1",
+        "hits": 1,
+        "targeting": "single",
+        "notes": [
+          "Placeholder skill name/text."
+        ]
+      },
+      "A2": {
+        "key": "A2",
+        "name": "A2",
+        "hits": 1,
+        "targeting": "aoe",
+        "notes": [
+          "Placeholder skill name/text."
+        ]
+      },
+      "A3": {
+        "key": "A3",
+        "name": "A3",
+        "hits": 1,
+        "targeting": "aoe",
+        "notes": [
+          "Placeholder skill name/text."
+        ]
+      }
+    }
+  }
+}
