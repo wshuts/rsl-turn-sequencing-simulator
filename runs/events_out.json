@@ -2872,7 +2872,7 @@
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -2943,7 +2943,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -3039,7 +3039,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 10,
+      "boss_shield_value": 4,
       "boss_shield_status": "UP"
     }
   },
@@ -3110,7 +3110,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 10,
+      "boss_shield_value": 4,
       "boss_shield_status": "UP"
     }
   },
@@ -3206,7 +3206,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 7,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -3277,7 +3277,7 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 7,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -3373,8 +3373,8 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 2,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -3444,8 +3444,8 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 2,
-      "boss_shield_status": "UP",
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN",
       "join_attack_joiners": []
     }
   },
@@ -3575,8 +3575,8 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -3646,8 +3646,8 @@
     "actor": "Martyr",
     "data": {
       "actor_index": 2,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -3833,7 +3833,7 @@
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "boss_shield_value": 12,
+      "boss_shield_value": 7,
       "boss_shield_status": "UP"
     }
   },
@@ -3904,7 +3904,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 12,
+      "boss_shield_value": 7,
       "boss_shield_status": "UP"
     }
   },
@@ -4034,7 +4034,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 10,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -4105,7 +4105,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 10,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -4247,7 +4247,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 7,
+      "boss_shield_value": 2,
       "boss_shield_status": "UP"
     }
   },
@@ -4318,7 +4318,7 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 7,
+      "boss_shield_value": 2,
       "boss_shield_status": "UP",
       "join_attack_joiners": []
     }
@@ -4441,7 +4441,7 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 6,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -4512,7 +4512,7 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 6,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -4642,8 +4642,8 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -4713,8 +4713,8 @@
     "actor": "Martyr",
     "data": {
       "actor_index": 2,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -5175,8 +5175,8 @@
     "actor": "Martyr",
     "data": {
       "actor_index": 2,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -5266,7 +5266,7 @@
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -5337,7 +5337,7 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP",
       "join_attack_joiners": []
     }
@@ -5716,8 +5716,8 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 6,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -5787,8 +5787,8 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 6,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -5955,8 +5955,8 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 6,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -6026,8 +6026,8 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 6,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -6194,8 +6194,8 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 5,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -6265,8 +6265,8 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 5,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -7311,7 +7311,7 @@
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -7382,7 +7382,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 11,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -7478,7 +7478,7 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 10,
+      "boss_shield_value": 4,
       "boss_shield_status": "UP"
     }
   },
@@ -7549,7 +7549,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 10,
+      "boss_shield_value": 4,
       "boss_shield_status": "UP"
     }
   },
@@ -7645,7 +7645,7 @@
     "actor": "Tomb Lord",
     "data": {
       "actor_index": 3,
-      "boss_shield_value": 7,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -7716,7 +7716,7 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 7,
+      "boss_shield_value": 1,
       "boss_shield_status": "UP"
     }
   },
@@ -7812,8 +7812,8 @@
     "actor": "Coldheart",
     "data": {
       "actor_index": 4,
-      "boss_shield_value": 2,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -7883,8 +7883,8 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 2,
-      "boss_shield_status": "UP",
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN",
       "join_attack_joiners": []
     }
   },
@@ -7980,8 +7980,8 @@
     "actor": "Mikage",
     "data": {
       "actor_index": 0,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -8051,8 +8051,8 @@
     "actor": "Martyr",
     "data": {
       "actor_index": 2,
-      "boss_shield_value": 1,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
