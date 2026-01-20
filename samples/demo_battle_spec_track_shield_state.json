@@ -74,6 +74,27 @@
               ]
             }
           }
+        },
+        "skill_sequence_steps": {
+          "7": {
+            "skill_id": "B_A3",
+            "allied_attack_outcomes": {
+              "effects_placed": [
+                {
+                  "placed_by": "Tomb Lord",
+                  "target": "Fire Knight",
+                  "effect_kind": "DECREASE_SPD",
+                  "magnitude": 0.30,
+                  "duration_turns": 2,
+                  "timing": "AFTER_SHIELD_OPEN",
+                  "requires": {
+                    "boss_shield_open": true
+                  },
+                  "reason": "Observed on Turn 82; Tomb Lord landed Decrease SPD during Mikage A3 allied attack after shield opened. ACC/RES gate succeeded here (did not succeed on Turn 63)."
+                }
+              ]
+            }
+          }
         }
       }
     },
