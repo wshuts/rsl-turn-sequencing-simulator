@@ -7096,6 +7096,20 @@
   {
     "tick": 37,
     "seq": 7,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "effect": "HEX",
+      "target": "Fire Knight",
+      "magnitude": 0.0,
+      "duration": 2,
+      "timing": "AFTER_SHIELD_OPEN"
+    }
+  },
+  {
+    "tick": 37,
+    "seq": 8,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mithrala",
     "data": {
@@ -7114,7 +7128,7 @@
   },
   {
     "tick": 37,
-    "seq": 8,
+    "seq": 9,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mithrala",
     "data": {
@@ -7133,7 +7147,7 @@
   },
   {
     "tick": 37,
-    "seq": 9,
+    "seq": 10,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mithrala",
     "data": {
@@ -7152,7 +7166,7 @@
   },
   {
     "tick": 37,
-    "seq": 10,
+    "seq": 11,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mithrala",
     "data": {
@@ -7171,7 +7185,7 @@
   },
   {
     "tick": 37,
-    "seq": 11,
+    "seq": 12,
     "type": "TURN_END",
     "actor": "Mithrala",
     "data": {
@@ -8989,6 +9003,16 @@
   {
     "tick": 48,
     "seq": 8,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Fire Knight",
+    "data": {
+      "actor_index": 5,
+      "effect": "EffectKind.HEX"
+    }
+  },
+  {
+    "tick": 48,
+    "seq": 9,
     "type": "TURN_END",
     "actor": "Fire Knight",
     "data": {
