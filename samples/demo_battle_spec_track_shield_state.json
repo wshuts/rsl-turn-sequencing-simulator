@@ -26,13 +26,21 @@
         }
       },
       "damage_received": {
-        "on_step": {
-          "3": {
-            "damaged": [
-              "Tomb Lord"
-            ]
+        "on_step": [
+          {
+            "2": {
+              "damaged": [
+              ]
+            }
+          },
+          {
+            "3": {
+              "damaged": [
+                "Tomb Lord"
+              ]
+            }
           }
-        }
+        ]
       }
     }
   },
