@@ -20,3 +20,4 @@ Thumbs.db
 htmlcov/
 /rsl_turn_sequencing.zip
 /.pytest_tmp/
+/runs/
