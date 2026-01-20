@@ -12,6 +12,9 @@ class EffectKind(str, Enum):
 
     DECREASE_SPD = "DECREASE_SPD"
     POISON = "POISON"
+    # Debuff used by Mithrala (A2) in Fire Knight sample data.
+    # Modeled as a normal TURN_END-decrementing debuff (no special triggers).
+    HEX = "HEX"
 
 
 @dataclass(slots=True)
