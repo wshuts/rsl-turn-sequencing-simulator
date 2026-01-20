@@ -819,6 +819,107 @@ def build_boss_turn_override_provider_from_battle_path(battle_path: Path) -> Bos
     return BossTurnOverrideProvider(schedule_by_boss)
 
 
+class EffectPlacementProvider:
+    """Inspectable, callable provider for effect placements driven by battle spec turn_overrides.
+
+    Current supported schema:
+      entity["turn_overrides"]["skill_sequence_steps"][step]["allied_attack_outcomes"]["effects_placed"]
+
+    Call contract:
+      provider({"actor_name": str, "skill_sequence_step": int}) -> list[dict]
+
+    Returns an empty list when no placements are scheduled for the requested key.
+    """
+
+    def __init__(self, schedule: dict[str, dict[int, list[dict[str, object]]]]):
+        self._schedule_by_entity = schedule
+
+    def __call__(self, ctx: dict[str, object]) -> list[dict[str, object]]:
+        if not isinstance(ctx, dict):
+            return []
+        actor = ctx.get('actor_name')
+        step = ctx.get('skill_sequence_step')
+        if not isinstance(actor, str) or not actor.strip():
+            return []
+        try:
+            step_i = int(step)
+        except Exception:
+            return []
+        if step_i <= 0:
+            return []
+        payload = self._schedule_by_entity.get(actor, {}).get(step_i, [])
+        if not isinstance(payload, list):
+            return []
+        return [p for p in payload if isinstance(p, dict)]
+
+    def steps_for_actor(self, actor_name: str) -> list[int]:
+        if not isinstance(actor_name, str) or not actor_name.strip():
+            return []
+        return sorted(int(k) for k in (self._schedule_by_entity.get(actor_name, {}) or {}).keys())
+
+
+def build_effect_placement_provider_from_battle_path(battle_path: Path) -> EffectPlacementProvider | None:
+    """Build an effect placement provider from a battle spec JSON file.
+
+    Canonical (demo) location:
+      raw["champions"][*]["turn_overrides"]["skill_sequence_steps"][step]["allied_attack_outcomes"]["effects_placed"]
+
+    Return contract mirrors other builders:
+      - If the JSON is readable and is an object, ALWAYS return an inspectable provider.
+      - If no placements are declared, the provider returns [] for every ctx.
+      - If the JSON cannot be read/parsed or is not an object, return None.
+    """
+    try:
+        raw = json.loads(battle_path.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    schedule_by_entity: dict[str, dict[int, list[dict[str, object]]]] = {}
+
+    def _merge_entity(container: object) -> None:
+        if not isinstance(container, dict):
+            return
+        name = container.get('name')
+        if not isinstance(name, str) or not name.strip():
+            return
+        turn_overrides = container.get('turn_overrides')
+        if not isinstance(turn_overrides, dict):
+            return
+        steps = turn_overrides.get('skill_sequence_steps')
+        if not isinstance(steps, dict):
+            return
+        for step_k, step_v in steps.items():
+            try:
+                step_i = int(step_k)
+            except Exception:
+                continue
+            if step_i <= 0 or not isinstance(step_v, dict):
+                continue
+            outcomes = step_v.get('allied_attack_outcomes')
+            if not isinstance(outcomes, dict):
+                continue
+            placed = outcomes.get('effects_placed')
+            if not isinstance(placed, list) or not placed:
+                continue
+            cleaned = [p for p in placed if isinstance(p, dict)]
+            if not cleaned:
+                continue
+            schedule_by_entity.setdefault(name, {}).setdefault(step_i, []).extend(cleaned)
+
+    boss = raw.get('boss')
+    _merge_entity(boss)
+
+    champs = raw.get('champions')
+    if isinstance(champs, list):
+        for ch in champs:
+            _merge_entity(ch)
+
+    return EffectPlacementProvider(schedule_by_entity)
+
+
 def run_ticks(
         *,
         actors: list[Actor],
@@ -838,9 +939,11 @@ def run_ticks(
 
     mastery_proc_requester = None
     boss_turn_override_provider = None
+    effect_placement_provider = None
     if battle_path_for_mastery_procs is not None:
         mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path_for_mastery_procs)
         boss_turn_override_provider = build_boss_turn_override_provider_from_battle_path(battle_path_for_mastery_procs)
+        effect_placement_provider = build_effect_placement_provider_from_battle_path(battle_path_for_mastery_procs)
 
     def _is_boss_turn_end_event(evt: object) -> bool:
         actor = getattr(evt, "actor", None)
@@ -949,6 +1052,7 @@ def run_ticks(
             hit_provider=hit_provider,
             hit_contribution_resolver=hit_contribution_resolver,
             mastery_proc_requester=mastery_proc_requester,
+            effect_placement_provider=effect_placement_provider,
         )
 
         if stop_after_boss_turns is not None:
@@ -1598,6 +1702,7 @@ def step_tick(
         expiration_resolver: ExpirationResolver | None = None,
         expiration_injector: callable | None = None,
         mastery_proc_requester: callable | None = None,
+        effect_placement_provider: callable | None = None,
 ) -> Actor | None:
     """
     Advance the simulation by one global tick.
@@ -1860,6 +1965,83 @@ def step_tick(
             reflect_hits = int(current_hits.get("REFLECT", 0))
             if reflect_hits > 0:
                 boss.shield = max(0, int(getattr(boss, "shield", 0)) - reflect_hits)
+
+    # Data-driven effect placements (turn_overrides.skill_sequence_steps).
+    # These are applied after shield-hit math so requirements like "AFTER_SHIELD_OPEN"
+    # can gate on the updated boss shield state.
+    if effect_placement_provider is not None:
+        try:
+            step_i = int(getattr(best, "skill_sequence_cursor", 0))
+        except Exception:
+            step_i = 0
+        if step_i > 0:
+            placements = effect_placement_provider({
+                "actor_name": str(getattr(best, "name", "")),
+                "skill_sequence_step": int(step_i),
+            }) or []
+        else:
+            placements = []
+
+        if isinstance(placements, list) and placements:
+            boss = next((a for a in actors if bool(getattr(a, "is_boss", False))), None)
+            boss_shield_open = bool(boss is not None and int(getattr(boss, "shield", 0)) == 0)
+
+            for item in placements:
+                if not isinstance(item, dict):
+                    continue
+
+                # Optional requires gate: currently only supports boss_shield_open.
+                requires = item.get("requires")
+                if isinstance(requires, dict):
+                    if requires.get("boss_shield_open") is True and not boss_shield_open:
+                        continue
+
+                timing = item.get("timing")
+                if isinstance(timing, str) and timing.strip().upper() == "AFTER_SHIELD_OPEN":
+                    if not boss_shield_open:
+                        continue
+
+                target_name = item.get("target")
+                if not isinstance(target_name, str) or not target_name.strip():
+                    continue
+                target = next((a for a in actors if a.name == target_name), None)
+                if target is None:
+                    continue
+
+                effect_kind = item.get("effect_kind")
+                if not isinstance(effect_kind, str) or not effect_kind.strip():
+                    continue
+                effect_kind_u = effect_kind.strip().upper()
+
+                # Only model Decrease SPD for now (sequencing-relevant).
+                if effect_kind_u != "DECREASE_SPD":
+                    continue
+
+                magnitude = item.get("magnitude", 0.0)
+                duration_turns = item.get("duration_turns", 0)
+                try:
+                    mag_f = float(magnitude)
+                    dur_i = int(duration_turns)
+                except Exception:
+                    continue
+                if dur_i <= 0:
+                    continue
+
+                from rsl_turn_sequencing.effects import Effect, EffectKind
+
+                target.effects.append(Effect(EffectKind.DECREASE_SPD, dur_i, magnitude=mag_f))
+
+                if event_sink is not None:
+                    event_sink.emit(
+                        EventType.EFFECT_APPLIED,
+                        actor=str(getattr(best, "name", "")),
+                        actor_index=int(i_best),
+                        effect=effect_kind_u,
+                        target=target.name,
+                        magnitude=float(mag_f),
+                        duration=int(dur_i),
+                        timing=str(timing) if isinstance(timing, str) else None,
+                    )
 
     # Optional snapshot capture at TURN_END (observer-only)
     if event_sink is not None:
