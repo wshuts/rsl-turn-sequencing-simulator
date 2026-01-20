@@ -573,6 +573,252 @@ def build_mastery_proc_requester_from_battle_path(battle_path: Path) -> MasteryP
     return _ChampionScopedRequester(schedule_by_entity)
 
 
+class DamageReceivedProvider:
+    """Inspectable, callable damage-received provider.
+
+    Call contract (engine):
+      provider({"champion_name": str, "skill_sequence_step": int}) -> list[str] | None
+
+    Semantics:
+      - Returns None when no override is declared for the requested (entity, step).
+      - Returns a list (possibly empty) when an override is declared.
+
+    Data source (battle spec):
+      entity["turn_overrides"]["damage_received"]["on_step"]
+
+    Supported shapes for `on_step`:
+      - dict: {"3": {"damaged": ["A", "B"]}, ...}
+      - list: [{"3": {"damaged": [...] }}, ...]
+    """
+
+    def __init__(self, schedule_by_entity: dict[str, dict[int, list[str]]]):
+        self._schedule_by_entity = schedule_by_entity
+
+    def __call__(self, ctx: dict[str, Any]) -> list[str] | None:
+        if not isinstance(ctx, dict):
+            return None
+        champ = ctx.get("champion_name")
+        step = ctx.get("skill_sequence_step")
+        if not isinstance(champ, str) or not champ.strip():
+            return None
+        try:
+            step_i = int(step)
+        except Exception:
+            return None
+        if step_i <= 0:
+            return None
+        per_step = self._schedule_by_entity.get(champ, {})
+        if step_i not in per_step:
+            return None
+        return list(per_step.get(step_i, []))
+
+    def steps(self, *, champion_name: str | None = None) -> list[int]:
+        if isinstance(champion_name, str) and champion_name.strip():
+            return sorted(self._schedule_by_entity.get(champion_name, {}).keys())
+        s: set[int] = set()
+        for per_step in self._schedule_by_entity.values():
+            s.update(int(k) for k in per_step.keys())
+        return sorted(s)
+
+
+def build_damage_received_provider_from_battle_path(battle_path: Path) -> DamageReceivedProvider | None:
+    """Build a damage-received override provider from a battle spec JSON file.
+
+    Canonical (boss-turn) use-case:
+      - On a specific boss skill-sequence step, the user may declare which champions
+        actually received damage.
+      - This enables deterministic gating for reactive mechanics that require
+        damage to be received (e.g., Faultless Defense reflect).
+
+    Return contract:
+      - If the JSON cannot be read/parsed or is not an object, return None.
+      - If the JSON is valid but declares no overrides, return a provider that
+        always returns None.
+    """
+    try:
+        raw = json.loads(battle_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    schedule_by_entity: dict[str, dict[int, list[str]]] = {}
+
+    def _extract_on_step(container: object) -> tuple[str, object] | None:
+        if not isinstance(container, dict):
+            return None
+        name = container.get("name")
+        if not isinstance(name, str) or not name.strip():
+            return None
+        turn_overrides = container.get("turn_overrides")
+        if not isinstance(turn_overrides, dict):
+            return None
+        dr = turn_overrides.get("damage_received")
+        if not isinstance(dr, dict):
+            return None
+        on_step = dr.get("on_step")
+        if on_step is None:
+            return None
+        return (name, on_step)
+
+    def _merge_step_obj(entity_name: str, step_key: object, payload: object) -> None:
+        try:
+            step_i = int(step_key)
+        except Exception:
+            return
+        if step_i <= 0 or not isinstance(payload, dict):
+            return
+        damaged = payload.get("damaged")
+        if not isinstance(damaged, list):
+            return
+        cleaned = [str(x) for x in damaged if isinstance(x, str) and x.strip()]
+        schedule_by_entity.setdefault(entity_name, {})[step_i] = cleaned
+
+    def _merge_on_step(entity_name: str, on_step: object) -> None:
+        if isinstance(on_step, dict):
+            for k, v in on_step.items():
+                _merge_step_obj(entity_name, k, v)
+            return
+        if isinstance(on_step, list):
+            for item in on_step:
+                if not isinstance(item, dict):
+                    continue
+                for k, v in item.items():
+                    _merge_step_obj(entity_name, k, v)
+            return
+
+    boss = raw.get("boss")
+    boss_pair = _extract_on_step(boss)
+    if boss_pair is not None:
+        entity_name, on_step = boss_pair
+        _merge_on_step(entity_name, on_step)
+
+    champions = raw.get("champions")
+    if isinstance(champions, list):
+        for ch in champions:
+            pair = _extract_on_step(ch)
+            if pair is None:
+                continue
+            entity_name, on_step = pair
+            _merge_on_step(entity_name, on_step)
+
+    return DamageReceivedProvider(schedule_by_entity)
+
+
+class BossTurnOverrideProvider:
+    """Inspectable, callable boss turn-override provider.
+
+    Current supported override(s):
+      - damage_received: which champions actually received damage from the boss
+        on a given boss skill-sequence step (used to gate reflect-style effects
+        such as Faultless Defense).
+
+    Call contract:
+      provider({"boss_name": str, "skill_sequence_step": int}) -> dict | None
+
+    Return value:
+      - None when no override exists for the requested boss+step.
+      - Otherwise a dict payload, currently: {"damaged": [<names>]}
+    """
+
+    def __init__(self, schedule: dict[str, dict[int, dict[str, Any]]]):
+        self._schedule_by_boss = schedule
+
+    def __call__(self, ctx: dict[str, Any]) -> dict[str, Any] | None:
+        if not isinstance(ctx, dict):
+            return None
+        boss = ctx.get("boss_name")
+        step = ctx.get("skill_sequence_step")
+        if not isinstance(boss, str) or not boss.strip():
+            return None
+        try:
+            step_i = int(step)
+        except Exception:
+            return None
+        if step_i <= 0:
+            return None
+        payload = self._schedule_by_boss.get(boss, {}).get(step_i)
+        if not isinstance(payload, dict):
+            return None
+        return dict(payload)
+
+    def steps_for_boss(self, boss_name: str) -> list[int]:
+        if not isinstance(boss_name, str) or not boss_name.strip():
+            return []
+        return sorted(int(k) for k in (self._schedule_by_boss.get(boss_name, {}) or {}).keys())
+
+
+def build_boss_turn_override_provider_from_battle_path(battle_path: Path) -> BossTurnOverrideProvider | None:
+    """Build boss turn overrides from a battle spec JSON file.
+
+    Canonical (demo) location:
+      raw["boss"]["turn_overrides"]["damage_received"]["on_step"]
+
+    Where on_step may be either:
+      - a dict: {"3": {"damaged": [..]}}
+      - or a list of dict items: [{"3": {"damaged": [..]}}, ...]
+
+    Return contract mirrors mastery proc builder:
+      - If the JSON is readable and is an object, ALWAYS return an inspectable provider.
+      - If no overrides are declared, the provider returns None for every ctx.
+      - If the JSON cannot be read/parsed or is not an object, return None.
+    """
+    try:
+        raw = json.loads(battle_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    schedule_by_boss: dict[str, dict[int, dict[str, Any]]] = {}
+
+    boss = raw.get("boss")
+    if not isinstance(boss, dict):
+        return BossTurnOverrideProvider(schedule_by_boss)
+
+    boss_name = boss.get("name")
+    if not isinstance(boss_name, str) or not boss_name.strip():
+        return BossTurnOverrideProvider(schedule_by_boss)
+
+    turn_overrides = boss.get("turn_overrides")
+    if not isinstance(turn_overrides, dict):
+        return BossTurnOverrideProvider(schedule_by_boss)
+
+    damage_received = turn_overrides.get("damage_received")
+    if not isinstance(damage_received, dict):
+        return BossTurnOverrideProvider(schedule_by_boss)
+
+    on_step = damage_received.get("on_step")
+    merged: dict[str, Any] = {}
+    if isinstance(on_step, dict):
+        merged = dict(on_step)
+    elif isinstance(on_step, list):
+        for item in on_step:
+            if not isinstance(item, dict):
+                continue
+            for k, v in item.items():
+                merged[str(k)] = v
+
+    for k, v in merged.items():
+        if not isinstance(v, dict):
+            continue
+        damaged = v.get("damaged")
+        if not isinstance(damaged, list):
+            continue
+        cleaned = [n for n in damaged if isinstance(n, str) and n.strip()]
+        try:
+            step_i = int(k)
+        except Exception:
+            continue
+        if step_i <= 0:
+            continue
+        schedule_by_boss.setdefault(boss_name, {})[step_i] = {"damaged": cleaned}
+
+    return BossTurnOverrideProvider(schedule_by_boss)
+
+
 def run_ticks(
         *,
         actors: list[Actor],
@@ -586,13 +832,15 @@ def run_ticks(
     """Engine-owned ticking loop.
 
     This is an architectural seam: callers provide data (battle spec path), and
-    the engine builds/owns the mastery proc requester. Callers should not pass
-    requester closures into the engine.
+    the engine builds/owns the mastery proc requester and any boss turn overrides.
+    Callers should not pass requester/override closures into the engine.
     """
 
     mastery_proc_requester = None
+    boss_turn_override_provider = None
     if battle_path_for_mastery_procs is not None:
         mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path_for_mastery_procs)
+        boss_turn_override_provider = build_boss_turn_override_provider_from_battle_path(battle_path_for_mastery_procs)
 
     def _is_boss_turn_end_event(evt: object) -> bool:
         actor = getattr(evt, "actor", None)
@@ -605,12 +853,101 @@ def run_ticks(
 
     boss_turns_seen = 0
 
+    def _resolver_with_boss_overrides(
+            *,
+            acting_actor: Actor,
+            actors: list[Actor],
+            base_hits: dict[str, int],
+            turn_counter: int,
+            tick: int,
+    ) -> dict[str, int]:
+        """Wrapper around the default hit contribution resolver.
+
+        When a boss `damage_received` override exists for the current boss skill-sequence step,
+        Faultless Defense reflect hits are gated to only those targets listed as damaged.
+        """
+        extra = _default_hit_contribution_resolver(
+            acting_actor=acting_actor,
+            actors=actors,
+            base_hits=base_hits,
+            turn_counter=turn_counter,
+            tick=tick,
+        )
+
+        if boss_turn_override_provider is None:
+            return extra
+        if not bool(getattr(acting_actor, "is_boss", False)):
+            return extra
+
+        try:
+            boss_step = int(getattr(acting_actor, "skill_sequence_cursor", 0))
+        except Exception:
+            boss_step = 0
+        if boss_step <= 0:
+            return extra
+
+        payload = boss_turn_override_provider(
+            {
+                "boss_name": str(getattr(acting_actor, "name", "")),
+                "skill_sequence_step": boss_step,
+            }
+        )
+        if not isinstance(payload, dict):
+            return extra
+        damaged = payload.get("damaged")
+        if not isinstance(damaged, list):
+            return extra
+        damaged_set = {n for n in damaged if isinstance(n, str) and n.strip()}
+
+        # Recompute reflect hits with damage gating, then replace REFLECT bucket.
+        allies = [a for a in actors if not bool(getattr(a, "is_boss", False))]
+        reflect_hits = 0
+        for holder in allies:
+            fd_cfg = holder.blessings.get("faultless_defense")
+            if not isinstance(fd_cfg, dict):
+                continue
+            modeling = fd_cfg.get("modeling")
+            if not isinstance(modeling, dict):
+                continue
+            emits = modeling.get("emits_hit_event")
+            if not isinstance(emits, dict):
+                continue
+            try:
+                per_target = int(emits.get("count", 1))
+            except Exception:
+                per_target = 1
+            if per_target <= 0:
+                continue
+
+            for target in allies:
+                if target.name not in damaged_set:
+                    continue
+                for fx in getattr(target, "active_effects", []) or []:
+                    if getattr(fx, "effect_kind", None) != "BUFF":
+                        continue
+                    if getattr(fx, "effect_id", None) != "increase_def":
+                        continue
+                    if getattr(fx, "placed_by", None) != holder.name:
+                        continue
+                    reflect_hits += per_target
+                    break
+
+        extra = dict(extra)
+        if reflect_hits > 0:
+            extra["REFLECT"] = int(reflect_hits)
+        else:
+            extra.pop("REFLECT", None)
+        return extra
+
+    hit_contribution_resolver = _resolver_with_boss_overrides if boss_turn_override_provider is not None else None
+
     for _ in range(int(ticks)):
         before_len = len(getattr(event_sink, "events", []) or [])
         step_tick(
             actors,
             event_sink=event_sink,
             hit_provider=hit_provider,
+            hit_contribution_resolver=hit_contribution_resolver,
             mastery_proc_requester=mastery_proc_requester,
         )
 
