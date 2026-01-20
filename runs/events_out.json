@@ -5696,6 +5696,20 @@
   {
     "tick": 30,
     "seq": 27,
+    "type": "EFFECT_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "effect": "DECREASE_SPD",
+      "target": "Fire Knight",
+      "magnitude": 0.3,
+      "duration": 2,
+      "timing": "AFTER_SHIELD_OPEN"
+    }
+  },
+  {
+    "tick": 30,
+    "seq": 28,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
     "data": {
@@ -5714,7 +5728,7 @@
   },
   {
     "tick": 30,
-    "seq": 28,
+    "seq": 29,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
     "data": {
@@ -5733,7 +5747,7 @@
   },
   {
     "tick": 30,
-    "seq": 29,
+    "seq": 30,
     "type": "TURN_END",
     "actor": "Mikage",
     "data": {
@@ -5778,7 +5792,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 500.0
+          "turn_meter": 425.0
         }
       ]
     }
@@ -5945,7 +5959,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 750.0
+          "turn_meter": 600.0
         }
       ]
     }
@@ -6112,7 +6126,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1000.0
+          "turn_meter": 775.0
         }
       ]
     }
@@ -6279,7 +6293,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1250.0
+          "turn_meter": 950.0
         }
       ]
     }
@@ -6446,7 +6460,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1500.0
+          "turn_meter": 1125.0
         }
       ]
     }
@@ -6994,59 +7008,9 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1750.0
+          "turn_meter": 1300.0
         }
       ]
-    }
-  },
-  {
-    "tick": 36,
-    "seq": 3,
-    "type": "WINNER_SELECTED",
-    "actor": "Fire Knight",
-    "data": {
-      "actor_index": 5,
-      "pre_reset_tm": 1750.0
-    }
-  },
-  {
-    "tick": 36,
-    "seq": 4,
-    "type": "RESET_APPLIED",
-    "actor": "Fire Knight",
-    "data": {
-      "actor_index": 5
-    }
-  },
-  {
-    "tick": 36,
-    "seq": 5,
-    "type": "TURN_START",
-    "actor": "Fire Knight",
-    "data": {
-      "actor_index": 5,
-      "boss_shield_value": 21,
-      "boss_shield_status": "UP"
-    }
-  },
-  {
-    "tick": 36,
-    "seq": 6,
-    "type": "SKILL_CONSUMED",
-    "actor": "Fire Knight",
-    "data": {
-      "skill_id": "A1"
-    }
-  },
-  {
-    "tick": 36,
-    "seq": 7,
-    "type": "TURN_END",
-    "actor": "Fire Knight",
-    "data": {
-      "actor_index": 5,
-      "boss_shield_value": 5,
-      "boss_shield_status": "UP"
     }
   },
   {
@@ -7085,7 +7049,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 250.0
+          "turn_meter": 1475.0
         }
       ]
     }
@@ -7116,8 +7080,8 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 5,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -7145,7 +7109,7 @@
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 34
+      "turn_counter": 33
     }
   },
   {
@@ -7164,7 +7128,7 @@
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 34
+      "turn_counter": 33
     }
   },
   {
@@ -7183,7 +7147,7 @@
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 34
+      "turn_counter": 33
     }
   },
   {
@@ -7202,7 +7166,7 @@
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 34
+      "turn_counter": 33
     }
   },
   {
@@ -7212,8 +7176,8 @@
     "actor": "Mithrala",
     "data": {
       "actor_index": 1,
-      "boss_shield_value": 4,
-      "boss_shield_status": "UP"
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
     }
   },
   {
@@ -7252,7 +7216,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 500.0
+          "turn_meter": 1650.0
         }
       ]
     }
@@ -7261,29 +7225,29 @@
     "tick": 38,
     "seq": 3,
     "type": "WINNER_SELECTED",
-    "actor": "Tomb Lord",
+    "actor": "Fire Knight",
     "data": {
-      "actor_index": 3,
-      "pre_reset_tm": 1620.0
+      "actor_index": 5,
+      "pre_reset_tm": 1650.0
     }
   },
   {
     "tick": 38,
     "seq": 4,
     "type": "RESET_APPLIED",
-    "actor": "Tomb Lord",
+    "actor": "Fire Knight",
     "data": {
-      "actor_index": 3
+      "actor_index": 5
     }
   },
   {
     "tick": 38,
     "seq": 5,
     "type": "TURN_START",
-    "actor": "Tomb Lord",
+    "actor": "Fire Knight",
     "data": {
-      "actor_index": 3,
-      "boss_shield_value": 4,
+      "actor_index": 5,
+      "boss_shield_value": 21,
       "boss_shield_status": "UP"
     }
   },
@@ -7291,7 +7255,7 @@
     "tick": 38,
     "seq": 6,
     "type": "SKILL_CONSUMED",
-    "actor": "Tomb Lord",
+    "actor": "Fire Knight",
     "data": {
       "skill_id": "A1"
     }
@@ -7299,87 +7263,11 @@
   {
     "tick": 38,
     "seq": 7,
-    "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Tomb Lord",
-    "data": {
-      "instance_id": "fx_Martyr_A2_4_Tomb Lord_increase_def",
-      "effect_id": "increase_def",
-      "effect_kind": "BUFF",
-      "owner": "Tomb Lord",
-      "placed_by": "Martyr",
-      "duration_before": 2,
-      "duration_after": 1,
-      "delta": -1,
-      "reason": "tick_decrement",
-      "boundary": "turn_end",
-      "turn_counter": 35
-    }
-  },
-  {
-    "tick": 38,
-    "seq": 8,
-    "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Tomb Lord",
-    "data": {
-      "instance_id": "fx_Martyr_A2_4_Tomb Lord_counterattack",
-      "effect_id": "counterattack",
-      "effect_kind": "BUFF",
-      "owner": "Tomb Lord",
-      "placed_by": "Martyr",
-      "duration_before": 2,
-      "duration_after": 1,
-      "delta": -1,
-      "reason": "tick_decrement",
-      "boundary": "turn_end",
-      "turn_counter": 35
-    }
-  },
-  {
-    "tick": 38,
-    "seq": 9,
-    "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Tomb Lord",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_atk",
-      "effect_id": "increase_atk",
-      "effect_kind": "BUFF",
-      "owner": "Tomb Lord",
-      "placed_by": "Mikage",
-      "duration_before": 2,
-      "duration_after": 1,
-      "delta": -1,
-      "reason": "tick_decrement",
-      "boundary": "turn_end",
-      "turn_counter": 35
-    }
-  },
-  {
-    "tick": 38,
-    "seq": 10,
-    "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Tomb Lord",
-    "data": {
-      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_c_dmg",
-      "effect_id": "increase_c_dmg",
-      "effect_kind": "BUFF",
-      "owner": "Tomb Lord",
-      "placed_by": "Mikage",
-      "duration_before": 2,
-      "duration_after": 1,
-      "delta": -1,
-      "reason": "tick_decrement",
-      "boundary": "turn_end",
-      "turn_counter": 35
-    }
-  },
-  {
-    "tick": 38,
-    "seq": 11,
     "type": "TURN_END",
-    "actor": "Tomb Lord",
+    "actor": "Fire Knight",
     "data": {
-      "actor_index": 3,
-      "boss_shield_value": 1,
+      "actor_index": 5,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -7411,7 +7299,7 @@
         },
         {
           "name": "Tomb Lord",
-          "turn_meter": 270.0
+          "turn_meter": 1890.0
         },
         {
           "name": "Coldheart",
@@ -7419,7 +7307,7 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 750.0
+          "turn_meter": 175.0
         }
       ]
     }
@@ -7428,29 +7316,29 @@
     "tick": 39,
     "seq": 3,
     "type": "WINNER_SELECTED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "actor_index": 4,
-      "pre_reset_tm": 1590.0
+      "actor_index": 3,
+      "pre_reset_tm": 1890.0
     }
   },
   {
     "tick": 39,
     "seq": 4,
     "type": "RESET_APPLIED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "actor_index": 4
+      "actor_index": 3
     }
   },
   {
     "tick": 39,
     "seq": 5,
     "type": "TURN_START",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "actor_index": 4,
-      "boss_shield_value": 1,
+      "actor_index": 3,
+      "boss_shield_value": 5,
       "boss_shield_status": "UP"
     }
   },
@@ -7458,7 +7346,7 @@
     "tick": 39,
     "seq": 6,
     "type": "SKILL_CONSUMED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
       "skill_id": "A1"
     }
@@ -7467,87 +7355,87 @@
     "tick": 39,
     "seq": 7,
     "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "instance_id": "fx_Martyr_A2_4_Coldheart_increase_def",
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_increase_def",
       "effect_id": "increase_def",
       "effect_kind": "BUFF",
-      "owner": "Coldheart",
+      "owner": "Tomb Lord",
       "placed_by": "Martyr",
       "duration_before": 2,
       "duration_after": 1,
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 36
+      "turn_counter": 35
     }
   },
   {
     "tick": 39,
     "seq": 8,
     "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "instance_id": "fx_Martyr_A2_4_Coldheart_counterattack",
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_counterattack",
       "effect_id": "counterattack",
       "effect_kind": "BUFF",
-      "owner": "Coldheart",
+      "owner": "Tomb Lord",
       "placed_by": "Martyr",
       "duration_before": 2,
       "duration_after": 1,
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 36
+      "turn_counter": 35
     }
   },
   {
     "tick": 39,
     "seq": 9,
     "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_atk",
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_atk",
       "effect_id": "increase_atk",
       "effect_kind": "BUFF",
-      "owner": "Coldheart",
+      "owner": "Tomb Lord",
       "placed_by": "Mikage",
       "duration_before": 2,
       "duration_after": 1,
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 36
+      "turn_counter": 35
     }
   },
   {
     "tick": 39,
     "seq": 10,
     "type": "EFFECT_DURATION_CHANGED",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_c_dmg",
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_c_dmg",
       "effect_id": "increase_c_dmg",
       "effect_kind": "BUFF",
-      "owner": "Coldheart",
+      "owner": "Tomb Lord",
       "placed_by": "Mikage",
       "duration_before": 2,
       "duration_after": 1,
       "delta": -1,
       "reason": "tick_decrement",
       "boundary": "turn_end",
-      "turn_counter": 36
+      "turn_counter": 35
     }
   },
   {
     "tick": 39,
     "seq": 11,
     "type": "TURN_END",
-    "actor": "Coldheart",
+    "actor": "Tomb Lord",
     "data": {
-      "actor_index": 4,
-      "boss_shield_value": 0,
-      "boss_shield_status": "BROKEN"
+      "actor_index": 3,
+      "boss_shield_value": 2,
+      "boss_shield_status": "UP"
     }
   },
   {
@@ -7578,15 +7466,15 @@
         },
         {
           "name": "Tomb Lord",
-          "turn_meter": 540.0
+          "turn_meter": 270.0
         },
         {
           "name": "Coldheart",
-          "turn_meter": 265.0
+          "turn_meter": 1855.0
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1000.0
+          "turn_meter": 350.0
         }
       ]
     }
@@ -7595,14 +7483,181 @@
     "tick": 40,
     "seq": 3,
     "type": "WINNER_SELECTED",
-    "actor": "Mikage",
+    "actor": "Coldheart",
     "data": {
-      "actor_index": 0,
-      "pre_reset_tm": 1700.0
+      "actor_index": 4,
+      "pre_reset_tm": 1855.0
     }
   },
   {
     "tick": 40,
+    "seq": 4,
+    "type": "RESET_APPLIED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 5,
+    "type": "TURN_START",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "boss_shield_value": 2,
+      "boss_shield_status": "UP"
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 6,
+    "type": "SKILL_CONSUMED",
+    "actor": "Coldheart",
+    "data": {
+      "skill_id": "A1"
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 7,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Coldheart_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration_before": 2,
+      "duration_after": 1,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 36
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 8,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Coldheart_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration_before": 2,
+      "duration_after": 1,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 36
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 9,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration_before": 2,
+      "duration_after": 1,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 36
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 10,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration_before": 2,
+      "duration_after": 1,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 36
+    }
+  },
+  {
+    "tick": 40,
+    "seq": 11,
+    "type": "TURN_END",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 41,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 41,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 2040.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 1128.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 1764.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 540.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 265.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 525.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 41,
+    "seq": 3,
+    "type": "WINNER_SELECTED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "pre_reset_tm": 2040.0
+    }
+  },
+  {
+    "tick": 41,
     "seq": 4,
     "type": "RESET_APPLIED",
     "actor": "Mikage",
@@ -7611,7 +7666,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 5,
     "type": "TURN_START",
     "actor": "Mikage",
@@ -7623,7 +7678,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 6,
     "type": "SKILL_CONSUMED",
     "actor": "Mikage",
@@ -7632,7 +7687,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 7,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
@@ -7651,7 +7706,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 8,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
@@ -7670,7 +7725,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 9,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
@@ -7689,7 +7744,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 10,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Mikage",
@@ -7708,7 +7763,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 11,
     "type": "EFFECT_EXPIRED",
     "actor": "Mikage",
@@ -7725,7 +7780,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 12,
     "type": "EFFECT_EXPIRED",
     "actor": "Mikage",
@@ -7742,7 +7797,7 @@
     }
   },
   {
-    "tick": 40,
+    "tick": 41,
     "seq": 13,
     "type": "TURN_END",
     "actor": "Mikage",
@@ -7753,14 +7808,14 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 1,
     "type": "TICK_START",
     "actor": null,
     "data": {}
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 2,
     "type": "FILL_COMPLETE",
     "actor": null,
@@ -7772,11 +7827,11 @@
         },
         {
           "name": "Mithrala",
-          "turn_meter": 1128.0
+          "turn_meter": 1410.0
         },
         {
           "name": "Martyr",
-          "turn_meter": 1764.0
+          "turn_meter": 2016.0
         },
         {
           "name": "Tomb Lord",
@@ -7788,23 +7843,23 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1250.0
+          "turn_meter": 700.0
         }
       ]
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 3,
     "type": "WINNER_SELECTED",
     "actor": "Martyr",
     "data": {
       "actor_index": 2,
-      "pre_reset_tm": 1764.0
+      "pre_reset_tm": 2016.0
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 4,
     "type": "RESET_APPLIED",
     "actor": "Martyr",
@@ -7813,7 +7868,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 5,
     "type": "TURN_START",
     "actor": "Martyr",
@@ -7824,7 +7879,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 6,
     "type": "SKILL_CONSUMED",
     "actor": "Martyr",
@@ -7833,7 +7888,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 7,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Martyr",
@@ -7852,7 +7907,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 8,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Martyr",
@@ -7871,7 +7926,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 9,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Martyr",
@@ -7890,7 +7945,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 10,
     "type": "EFFECT_DURATION_CHANGED",
     "actor": "Martyr",
@@ -7909,7 +7964,7 @@
     }
   },
   {
-    "tick": 41,
+    "tick": 42,
     "seq": 11,
     "type": "TURN_END",
     "actor": "Martyr",
@@ -7920,14 +7975,14 @@
     }
   },
   {
-    "tick": 42,
+    "tick": 43,
     "seq": 1,
     "type": "TICK_START",
     "actor": null,
     "data": {}
   },
   {
-    "tick": 42,
+    "tick": 43,
     "seq": 2,
     "type": "FILL_COMPLETE",
     "actor": null,
@@ -7939,7 +7994,7 @@
         },
         {
           "name": "Mithrala",
-          "turn_meter": 1410.0
+          "turn_meter": 1692.0
         },
         {
           "name": "Martyr",
@@ -7955,23 +8010,945 @@
         },
         {
           "name": "Fire Knight",
-          "turn_meter": 1500.0
+          "turn_meter": 875.0
         }
       ]
     }
   },
   {
-    "tick": 42,
+    "tick": 43,
+    "seq": 3,
+    "type": "WINNER_SELECTED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "pre_reset_tm": 1692.0
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 4,
+    "type": "RESET_APPLIED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 5,
+    "type": "TURN_START",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 6,
+    "type": "SKILL_CONSUMED",
+    "actor": "Mithrala",
+    "data": {
+      "skill_id": "A1"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 7,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mithrala",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Mithrala_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 39
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 8,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mithrala",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Mithrala_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 39
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 9,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mithrala",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Mithrala_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 39
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 10,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mithrala",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Mithrala_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 39
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 11,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "instance_id": "fx_Martyr_A2_4_Mithrala_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 12,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "instance_id": "fx_Martyr_A2_4_Mithrala_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 13,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "instance_id": "fx_Mikage_B_A3_7_Mithrala_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 14,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "instance_id": "fx_Mikage_B_A3_7_Mithrala_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mithrala",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 43,
+    "seq": 15,
+    "type": "TURN_END",
+    "actor": "Mithrala",
+    "data": {
+      "actor_index": 1,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 44,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 44,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 1020.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 282.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 504.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 1350.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 1060.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 1050.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 45,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 1360.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 564.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 756.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 1620.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 1325.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 1225.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 3,
+    "type": "WINNER_SELECTED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "pre_reset_tm": 1620.0
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 4,
+    "type": "RESET_APPLIED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 5,
+    "type": "TURN_START",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 6,
+    "type": "SKILL_CONSUMED",
+    "actor": "Tomb Lord",
+    "data": {
+      "skill_id": "A3"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 7,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Tomb Lord",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 40
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 8,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Tomb Lord",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 40
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 9,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Tomb Lord",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 40
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 10,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Tomb Lord",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 40
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 11,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 12,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "instance_id": "fx_Martyr_A2_4_Tomb Lord_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 13,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 14,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "instance_id": "fx_Mikage_B_A3_7_Tomb Lord_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Tomb Lord",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 45,
+    "seq": 15,
+    "type": "TURN_END",
+    "actor": "Tomb Lord",
+    "data": {
+      "actor_index": 3,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 46,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 1700.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 846.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 1008.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 270.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 1590.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 1400.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 3,
+    "type": "WINNER_SELECTED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "pre_reset_tm": 1700.0
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 4,
+    "type": "RESET_APPLIED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 5,
+    "type": "TURN_START",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN",
+      "join_attack_joiners": []
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 6,
+    "type": "SKILL_CONSUMED",
+    "actor": "Mikage",
+    "data": {
+      "skill_id": "B_A1"
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 7,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Mikage_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Mikage",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 41
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 8,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Mikage",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Mikage_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mikage",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 41
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 9,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "instance_id": "fx_Mikage_B_A3_7_Mikage_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Mikage",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 10,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "instance_id": "fx_Mikage_B_A3_7_Mikage_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Mikage",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 46,
+    "seq": 11,
+    "type": "TURN_END",
+    "actor": "Mikage",
+    "data": {
+      "actor_index": 0,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 47,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 340.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 1128.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 1260.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 540.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 1855.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 1575.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 3,
+    "type": "WINNER_SELECTED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "pre_reset_tm": 1855.0
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 4,
+    "type": "RESET_APPLIED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 5,
+    "type": "TURN_START",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 6,
+    "type": "MASTERY_PROC",
+    "actor": "Mikage",
+    "data": {
+      "holder": "Mikage",
+      "mastery": "rapid_response",
+      "count": 1,
+      "turn_counter": 42
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 7,
+    "type": "SKILL_CONSUMED",
+    "actor": "Coldheart",
+    "data": {
+      "skill_id": "A3"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 8,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Coldheart_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 42
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 9,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Martyr_A2_4_Coldheart_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 42
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 10,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 42
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 11,
+    "type": "EFFECT_DURATION_CHANGED",
+    "actor": "Coldheart",
+    "data": {
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration_before": 1,
+      "duration_after": 0,
+      "delta": -1,
+      "reason": "tick_decrement",
+      "boundary": "turn_end",
+      "turn_counter": 42
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 12,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "instance_id": "fx_Martyr_A2_4_Coldheart_increase_def",
+      "effect_id": "increase_def",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 13,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "instance_id": "fx_Martyr_A2_4_Coldheart_counterattack",
+      "effect_id": "counterattack",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Martyr",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 14,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_atk",
+      "effect_id": "increase_atk",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 15,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "instance_id": "fx_Mikage_B_A3_7_Coldheart_increase_c_dmg",
+      "effect_id": "increase_c_dmg",
+      "effect_kind": "BUFF",
+      "owner": "Coldheart",
+      "placed_by": "Mikage",
+      "duration": 1,
+      "reason": "duration_reached_zero",
+      "phase": "EventType.TURN_END"
+    }
+  },
+  {
+    "tick": 47,
+    "seq": 16,
+    "type": "TURN_END",
+    "actor": "Coldheart",
+    "data": {
+      "actor_index": 4,
+      "boss_shield_value": 0,
+      "boss_shield_status": "BROKEN"
+    }
+  },
+  {
+    "tick": 48,
+    "seq": 1,
+    "type": "TICK_START",
+    "actor": null,
+    "data": {}
+  },
+  {
+    "tick": 48,
+    "seq": 2,
+    "type": "FILL_COMPLETE",
+    "actor": null,
+    "data": {
+      "meters": [
+        {
+          "name": "Mikage",
+          "turn_meter": 823.0
+        },
+        {
+          "name": "Mithrala",
+          "turn_meter": 1410.0
+        },
+        {
+          "name": "Martyr",
+          "turn_meter": 1512.0
+        },
+        {
+          "name": "Tomb Lord",
+          "turn_meter": 810.0
+        },
+        {
+          "name": "Coldheart",
+          "turn_meter": 265.0
+        },
+        {
+          "name": "Fire Knight",
+          "turn_meter": 1750.0
+        }
+      ]
+    }
+  },
+  {
+    "tick": 48,
     "seq": 3,
     "type": "WINNER_SELECTED",
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "pre_reset_tm": 1500.0
+      "pre_reset_tm": 1750.0
     }
   },
   {
-    "tick": 42,
+    "tick": 48,
     "seq": 4,
     "type": "RESET_APPLIED",
     "actor": "Fire Knight",
@@ -7980,7 +8957,7 @@
     }
   },
   {
-    "tick": 42,
+    "tick": 48,
     "seq": 5,
     "type": "TURN_START",
     "actor": "Fire Knight",
@@ -7991,7 +8968,7 @@
     }
   },
   {
-    "tick": 42,
+    "tick": 48,
     "seq": 6,
     "type": "SKILL_CONSUMED",
     "actor": "Fire Knight",
@@ -8000,13 +8977,23 @@
     }
   },
   {
-    "tick": 42,
+    "tick": 48,
     "seq": 7,
+    "type": "EFFECT_EXPIRED",
+    "actor": "Fire Knight",
+    "data": {
+      "actor_index": 5,
+      "effect": "EffectKind.DECREASE_SPD"
+    }
+  },
+  {
+    "tick": 48,
+    "seq": 8,
     "type": "TURN_END",
     "actor": "Fire Knight",
     "data": {
       "actor_index": 5,
-      "boss_shield_value": 7,
+      "boss_shield_value": 19,
       "boss_shield_status": "UP"
     }
   }
