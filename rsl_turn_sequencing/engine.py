@@ -12,6 +12,7 @@ from rsl_turn_sequencing.effects import (
 from rsl_turn_sequencing.event_sink import EventSink
 from rsl_turn_sequencing.events import EventType
 from rsl_turn_sequencing.models import Actor, EffectInstance
+from rsl_turn_sequencing.skill_provider import build_hit_provider_from_battle_path
 
 TM_GATE = 1430.0
 EPS = 1e-9
@@ -944,6 +945,16 @@ def run_ticks(
         mastery_proc_requester = build_mastery_proc_requester_from_battle_path(battle_path_for_mastery_procs)
         boss_turn_override_provider = build_boss_turn_override_provider_from_battle_path(battle_path_for_mastery_procs)
         effect_placement_provider = build_effect_placement_provider_from_battle_path(battle_path_for_mastery_procs)
+
+        # Engine-owned skill consumption + base hit provider.
+        # When callers do not inject a hit_provider, we derive one from the
+        # battle spec and the engine-owned actor list.
+        if hit_provider is None:
+            hit_provider = build_hit_provider_from_battle_path(
+                battle_path=battle_path_for_mastery_procs,
+                actors=actors,
+                event_sink=event_sink,
+            )
 
     def _is_boss_turn_end_event(evt: object) -> bool:
         actor = getattr(evt, "actor", None)
