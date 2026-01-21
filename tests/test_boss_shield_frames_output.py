@@ -50,7 +50,8 @@ def test_acceptance_cli_consumes_skill_sequence_and_decrements_shield_from_datas
     assert "Coldheart" in out
     assert "[21 UP]" in n
     # Token format may evolve: allow none, (A1), or {A1}.
-    assert re.search(r"Coldheart( (\{[^}]+\}|\([^)]+\)))? \[17 UP\]", n), out
+    # If Coldheart ends her turn with no active buffs, stdout annotates her name with " (N)".
+    assert re.search(r"Coldheart( \(N\))?( (\{[^}]+\}|\([^)]+\)))? \[17 UP\]", n), out
 
     # Boss row exists
     assert "Fire Knight" in out

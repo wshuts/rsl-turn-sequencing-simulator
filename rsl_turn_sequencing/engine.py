@@ -2222,16 +2222,47 @@ def step_tick(
             )
 
         boss_shield = _boss_shield_snapshot(actors)
-        if boss_shield is None:
-            event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
-        else:
-            event_sink.emit(
-                EventType.TURN_END,
-                actor=best.name,
-                actor_index=i_best,
-                boss_shield_value=boss_shield["value"],
-                boss_shield_status=boss_shield["status"],
+
+        # Observer-only: include a minimal end-of-turn buff indicator in TURN_END.
+        # This allows stdout rendering to annotate actors that end their turn with
+        # zero active BUFF instances, without requiring full snapshot dumps.
+        try:
+            buffs_active_end = sum(
+                1
+                for inst in (getattr(best, "active_effects", None) or [])
+                if str(getattr(inst, "effect_kind", "")).upper() == "BUFF"
+                and int(getattr(inst, "duration", 0)) > 0
             )
+        except Exception:
+            buffs_active_end = None
+        if boss_shield is None:
+            if buffs_active_end is None:
+                event_sink.emit(EventType.TURN_END, actor=best.name, actor_index=i_best)
+            else:
+                event_sink.emit(
+                    EventType.TURN_END,
+                    actor=best.name,
+                    actor_index=i_best,
+                    buffs_active_end=int(buffs_active_end),
+                )
+        else:
+            if buffs_active_end is None:
+                event_sink.emit(
+                    EventType.TURN_END,
+                    actor=best.name,
+                    actor_index=i_best,
+                    boss_shield_value=boss_shield["value"],
+                    boss_shield_status=boss_shield["status"],
+                )
+            else:
+                event_sink.emit(
+                    EventType.TURN_END,
+                    actor=best.name,
+                    actor_index=i_best,
+                    boss_shield_value=boss_shield["value"],
+                    boss_shield_status=boss_shield["status"],
+                    buffs_active_end=int(buffs_active_end),
+                )
 
     return best
 

@@ -48,6 +48,31 @@ def _fmt_shield(snap: object | None) -> str:
 def _render_text_report(*, boss_actor: str, events, row_index_start: int | None = None) -> str:
     from rsl_turn_sequencing.events import EventType
 
+    def _actor_label_for_row(row) -> str:
+        """Return the actor display label for stdout.
+
+        If the TURN_END event includes buffs_active_end==0, append " (N)" to
+        indicate the actor ended their turn with no active BUFF instances.
+        """
+        try:
+            turn_end = next(
+                (
+                    e
+                    for e in reversed(row.events)
+                    if e.type == EventType.TURN_END and e.actor == row.actor
+                ),
+                None,
+            )
+            if turn_end is None:
+                return str(row.actor)
+            n = turn_end.data.get("buffs_active_end", None)
+            if isinstance(n, int) and n == 0:
+                return f"{row.actor} (N)"
+        except Exception:
+            # Rendering must stay best-effort.
+            pass
+        return str(row.actor)
+
     def _skill_token_for_row(row) -> str | None:
         for e in row.events:
             if e.type == EventType.SKILL_CONSUMED:
@@ -80,14 +105,15 @@ def _render_text_report(*, boss_actor: str, events, row_index_start: int | None 
         for row in frame.rows:
             tokens.append(_skill_token_for_row(row))
 
-        max_actor_len = max((len(row.actor) for row in frame.rows), default=0)
+        actor_labels = [_actor_label_for_row(r) for r in frame.rows]
+        max_actor_len = max((len(label) for label in actor_labels), default=0)
         max_token_len = max((len(f"{{{t}}}") for t in tokens if t), default=0)
 
-        for row, tok in zip(frame.rows, tokens):
+        for row, tok, actor_label in zip(frame.rows, tokens, actor_labels):
             pre = _fmt_shield(row.pre_shield)
             post = _fmt_shield(row.post_shield)
 
-            actor_padded = row.actor.ljust(max_actor_len)
+            actor_padded = actor_label.ljust(max_actor_len)
             token_cell = (f"{{{tok}}}" if tok else "")
             token_padded = token_cell.ljust(max_token_len) if max_token_len else ""
 
