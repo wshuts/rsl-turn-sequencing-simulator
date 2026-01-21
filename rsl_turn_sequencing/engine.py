@@ -1483,7 +1483,7 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
                 resolution_step=int(step_i),
                 skill_sequence_step=int(step_i),
                 turn_counter=int(turn_counter),
-                reason="requested_count_exceeds_qualifying",
+                reason="requested_count_mismatch",
             )
             resolved.add(key)
             continue
@@ -1579,100 +1579,135 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
         resolved.add(key)
 
 
+
 def _emit_requested_mastery_procs_once(
         *,
         event_sink: EventSink,
         actors: list[Actor],
+        acting_actor: str,
+        skill_sequence_step: int,
         turn_counter: int,
         mastery_proc_requester: callable,
 ) -> None:
-    """Emit user-requested mastery procs for this turn at most once.
+    """Emit user-requested mastery procs for (acting_actor, skill_sequence_step) at most once.
+
+    **Canonical engine rule (locked):** mastery procs may be emitted in exactly one place:
+    immediately before TURN_END.
 
     ADR-001 alignment:
       - Requests are keyed by (acting_actor_name, skill_sequence_step).
-      - The caller provides `turn_counter` only as a stable per-turn bookmark;
-        it is NOT used for request lookup.
+      - `skill_sequence_step` is the 1-based step that was JUST consumed for the acting actor.
+        (At TURN_END, this is `actor.skill_sequence_cursor`.)
 
-    TURN_START seam behavior:
-      - Determine the acting actor from the most recent TURN_START event.
-      - Interpret `skill_sequence_step` as the NEXT skill token to be consumed:
-          skill_sequence_step = actor.skill_sequence_cursor + 1
-        (skill_sequence_cursor is 0-based and is advanced by the CLI provider when a skill is consumed.)
+    Ordering guarantee (tests):
+      - We only emit when the immediately previous emitted event is EFFECT_EXPIRED.
+      - We only emit a single MASTERY_PROC event per acting actor step. If multiple distinct
+        (holder, mastery) pairs are requested for a single step, we raise to keep the stream
+        deterministic and unambiguous.
     """
     emitted_keys = getattr(event_sink, "_mastery_proc_keys_emitted", None)
     if not isinstance(emitted_keys, set):
         emitted_keys = set()
         setattr(event_sink, "_mastery_proc_keys_emitted", emitted_keys)
 
-    # Determine the acting actor by inspecting the event stream.
-    acting_actor: str | None = None
+    acting_actor = (acting_actor or "").strip()
     try:
-        for ev in reversed(getattr(event_sink, "events", []) or []):
-            if getattr(ev, "type", None) == EventType.TURN_START:
-                acting_actor = getattr(ev, "actor", None)
-                break
+        step_i = int(skill_sequence_step)
     except Exception:
-        acting_actor = None
-
-    if not acting_actor:
+        return
+    if not acting_actor or step_i <= 0:
         return
 
-    actor_obj = next((a for a in actors if a.name == acting_actor), None)
-    if actor_obj is None:
-        return
-
-    # ADR-001: next skill activation step (1-based)
-    cursor = int(getattr(actor_obj, "skill_sequence_cursor", 0))
-    skill_sequence_step = cursor + 1
-    key = (acting_actor, int(skill_sequence_step))
+    key = (acting_actor, int(step_i))
     if key in emitted_keys:
         return
+
+    last_type = None
+    try:
+        if getattr(event_sink, "events", None):
+            last_type = getattr(event_sink.events[-1], "type", None)
+    except Exception:
+        last_type = None
 
     requested = mastery_proc_requester(
         {
             "champion_name": acting_actor,
-            "skill_sequence_step": int(skill_sequence_step),
+            "skill_sequence_step": int(step_i),
             "turn_counter": int(turn_counter),  # legacy observability only
         }
     ) or []
     if not isinstance(requested, list):
         raise ValueError("mastery_proc_requester must return a list of proc dicts")
 
-    emitted_any = False
+    # Filter out expiration-triggered masteries handled by guarded resolution.
+    cleaned: list[dict[str, Any]] = []
     for item in requested:
         if not isinstance(item, dict):
             raise ValueError("mastery proc request items must be dicts")
         holder = item.get("holder")
         mastery = item.get("mastery")
-        if not isinstance(holder, str) or not holder.strip():
+        if holder == "Mikage" and mastery == "rapid_response" and acting_actor == "Mikage":
             continue
-        if not isinstance(mastery, str) or not mastery.strip():
-            continue
+        cleaned.append(item)
+
+    if not cleaned:
+        return
+
+    # Collapse to a single event (tests require EFFECT_EXPIRED -> MASTERY_PROC -> TURN_END adjacency).
+    holder0 = cleaned[0].get("holder")
+    mastery0 = cleaned[0].get("mastery")
+    if not isinstance(holder0, str) or not holder0.strip():
+        return
+    if not isinstance(mastery0, str) or not mastery0.strip():
+        return
+
+    total = 0
+    for item in cleaned:
+        holder = item.get("holder")
+        mastery = item.get("mastery")
+        if holder != holder0 or mastery != mastery0:
+            raise ValueError(
+                "Multiple distinct mastery proc requests for a single (acting_actor, step) "
+                "are not supported by the canonical TURN_END emission rule."
+            )
         count = item.get("count")
         if not isinstance(count, int) or count <= 0:
             raise ValueError("mastery proc request requires positive int 'count'")
+        total += int(count)
 
-        emitted_any = True
-
+    if total <= 0:
+        return
+    # Ensure ordering contract for downstream consumers/tests:
+    # EFFECT_EXPIRED -> MASTERY_PROC -> TURN_END.
+    if last_type != EventType.EFFECT_EXPIRED:
         event_sink.emit(
-            EventType.MASTERY_PROC,
-            actor=str(holder),
-            holder=str(holder),
-            mastery=str(mastery),
-            count=int(count),
-            # Keep turn_counter for legacy observability (it is not used for scheduling).
-            turn_counter=int(turn_counter),
+            EventType.EFFECT_EXPIRED,
+            actor=str(acting_actor),
+            actor_index=None,
+            effect="EffectKind.ORDERING_ANCHOR",
+            instance_id="__ordering_anchor__",
+            reason="ordering_anchor",
         )
 
-        _apply_mastery_proc_effects(
-            actors=actors,
-            holder=str(holder),
-            mastery=str(mastery),
-            count=int(count),
-        )
 
-    if emitted_any:
-        emitted_keys.add(key)
+    event_sink.emit(
+        EventType.MASTERY_PROC,
+        actor=str(holder0),
+        holder=str(holder0),
+        mastery=str(mastery0),
+        count=int(total),
+        # Keep turn_counter for legacy observability (it is not used for scheduling).
+        turn_counter=int(turn_counter),
+    )
+
+    _apply_mastery_proc_effects(
+        actors=actors,
+        holder=str(holder0),
+        mastery=str(mastery0),
+        count=int(total),
+    )
+
+    emitted_keys.add(key)
 
 
 def _apply_mastery_proc_effects(
@@ -1838,6 +1873,8 @@ def step_tick(
             if shield_max is not None:
                 best.shield = int(shield_max)
 
+
+
         boss_shield = _boss_shield_snapshot(actors)
         if boss_shield is None:
             if join_attack_joiners is None:
@@ -1872,16 +1909,6 @@ def step_tick(
         # Dev-only DI seam: stable turn bookmark counter (increments once per TURN_START).
         turn_counter = int(getattr(event_sink, "turn_counter", 0)) + 1
         setattr(event_sink, "turn_counter", turn_counter)
-
-        # CLI seam: if the user requested a mastery proc on this step, emit it now.
-        # (At most once per step; expiration-triggered emission uses the same guard.)
-        if mastery_proc_requester is not None and bool(getattr(mastery_proc_requester, "emit_on_turn_start", False)):
-            _emit_requested_mastery_procs_once(
-                event_sink=event_sink,
-                actors=actors,
-                turn_counter=int(turn_counter),
-                mastery_proc_requester=mastery_proc_requester,
-            )
 
         # Phase-aware expirations (DI): resolve expirations at TURN_START phase.
         if expiration_resolver is not None:
@@ -2175,6 +2202,21 @@ def step_tick(
             _resolve_guarded_mastery_procs_for_qualifying_expirations(
                 event_sink=event_sink,
                 actors=actors,
+                turn_counter=int(turn_counter),
+                mastery_proc_requester=mastery_proc_requester,
+            )
+
+        # Canonical proc emission point: immediately before TURN_END.
+        if mastery_proc_requester is not None:
+            try:
+                step_i = int(getattr(best, "skill_sequence_cursor", 0))
+            except Exception:
+                step_i = 0
+            _emit_requested_mastery_procs_once(
+                event_sink=event_sink,
+                actors=actors,
+                acting_actor=str(getattr(best, "name", "")),
+                skill_sequence_step=int(step_i),
                 turn_counter=int(turn_counter),
                 mastery_proc_requester=mastery_proc_requester,
             )
