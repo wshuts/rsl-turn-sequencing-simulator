@@ -93,6 +93,52 @@ def apply_skill_buffs(
                     )
         return
 
+
+    # --- Mithrala ---
+    # Simplified model (per project working agreement): Mithrala A3 places Strengthen + Shield
+    # on all allies for 2 turns. Presence-only: no cleanse, no mastery involvement, no shield value math.
+    if holder_l == "mithrala" and s == "A3":
+        for target in allies:
+            for effect_id in ("strengthen", "shield"):
+                instance_id = f"fx_{holder}_{s}_{seq_index}_{target.name}_{effect_id}"
+                inst = EffectInstance(
+                    instance_id=instance_id,
+                    effect_id=effect_id,
+                    effect_kind="BUFF",
+                    placed_by=holder,
+                    duration=2,
+                    applied_turn=applied_turn,
+                )
+                target.active_effects.append(inst)
+
+                if event_sink is not None:
+                    event_sink.emit(
+                        EventType.EFFECT_APPLIED,
+                        actor=holder,
+                        instance_id=inst.instance_id,
+                        effect_id=inst.effect_id,
+                        effect_kind=inst.effect_kind,
+                        owner=target.name,
+                        placed_by=inst.placed_by,
+                        duration=inst.duration,
+                        reason=s,
+                        boundary="placement",
+                    )
+
+                    event_sink.emit(
+                        EventType.EFFECT_DURATION_SET,
+                        actor=holder,
+                        instance_id=inst.instance_id,
+                        effect_id=inst.effect_id,
+                        effect_kind=inst.effect_kind,
+                        owner=target.name,
+                        placed_by=inst.placed_by,
+                        duration=inst.duration,
+                        reason="initial_application",
+                        boundary="placement",
+                    )
+        return
+
     # --- Mikage ---
     # Mikage-only provider surface (current scope): only model select Mikage skill behaviors.
     if holder_l not in {"mikage", "lady mikage"}:
