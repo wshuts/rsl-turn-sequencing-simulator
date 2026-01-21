@@ -1405,12 +1405,12 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
       event_sink._qualifying_expiration_counts[(holder_name, skill_sequence_step)] = Q
 
     Slice B enforces that a user-declared deterministic proc request for (holder, step)
-    MUST match Q.
+    MUST NOT exceed Q.
 
     Guard behavior (Option B):
-      - If a request exists for (holder, step) and requested_count != Q, emit
+      - If a request exists for (holder, step) and requested_count > Q, emit
         MASTERY_PROC_REJECTED and do NOT apply proc effects.
-      - If requested_count == Q, emit MASTERY_PROC and apply proc effects.
+      - If requested_count <= Q, emit MASTERY_PROC and apply proc effects.
       - If no request exists for (holder, step), do nothing (no rejection).
 
     Current scope (minimal): Mikage rapid_response only.
@@ -1469,7 +1469,7 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
             # No declared request for this (holder, step): remain silent.
             continue
 
-        if int(requested_total) != int(q_i):
+        if int(requested_total) > int(q_i):
             event_sink.emit(
                 EventType.MASTERY_PROC_REJECTED,
                 actor=holder_name,
@@ -1483,7 +1483,7 @@ def _resolve_guarded_mastery_procs_for_qualifying_expirations(
                 resolution_step=int(step_i),
                 skill_sequence_step=int(step_i),
                 turn_counter=int(turn_counter),
-                reason="requested_count_mismatch",
+                reason="requested_count_exceeds_qualifying",
             )
             resolved.add(key)
             continue
