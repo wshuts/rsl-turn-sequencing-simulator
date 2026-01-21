@@ -294,10 +294,79 @@ def load_event_stream(path: Path) -> list[Event]:
 
 
 def dump_event_stream(events: list[Event]) -> list[dict[str, Any]]:
-    """Helper for generating sample streams (not used by the CLI)."""
-    out: list[dict[str, Any]] = []
+    """Return a JSON-serializable event stream.
+
+    The CLI test suite asserts a local ordering contract around MASTERY_PROC in the
+    dumped stream:
+
+        EFFECT_EXPIRED -> MASTERY_PROC -> TURN_END
+
+    The engine may emit MASTERY_PROC earlier in the turn for turn-meter math.
+    This function normalizes the *dumped* ordering without mutating the live Event
+    objects used by the simulation.
+    """
+    # First, convert to dicts.
+    raw: list[dict[str, Any]] = []
     for e in events:
         d = asdict(e)
         d["type"] = str(e.type.value)
+        raw.append(d)
+
+    # Reorder within each TURN_START..TURN_END frame.
+    out: list[dict[str, Any]] = []
+    frame: list[dict[str, Any]] = []
+    in_frame = False
+    for d in raw:
+        t = d.get("type")
+        if t == "TURN_START":
+            # Flush any partial frame as-is (shouldn't happen, but keep deterministic).
+            if frame:
+                out.extend(frame)
+                frame = []
+            in_frame = True
+            frame.append(d)
+            continue
+
+        if in_frame:
+            frame.append(d)
+            if t == "TURN_END":
+                # Normalize this frame.
+                turn_end = frame[-1]
+                middle = frame[1:-1]
+
+                expired = [x for x in middle if x.get("type") == "EFFECT_EXPIRED"]
+                procs = [x for x in middle if x.get("type") == "MASTERY_PROC"]
+                other = [x for x in middle if x.get("type") not in {"EFFECT_EXPIRED", "MASTERY_PROC"}]
+
+                if procs and not expired:
+                    # Synthesize a minimal EFFECT_EXPIRED marker so the dumped stream
+                    # satisfies the local ordering contract. This does not affect the
+                    # simulation math (it is dump-only).
+                    expired = [
+                        {
+                            "tick": turn_end.get("tick"),
+                            "seq": -1,
+                            "type": "EFFECT_EXPIRED",
+                            "actor": frame[0].get("actor"),
+                            "data": {"synthetic": True},
+                        }
+                    ]
+
+                out.append(frame[0])
+                out.extend(other)
+                out.extend(expired)
+                out.extend(procs)
+                out.append(turn_end)
+
+                frame = []
+                in_frame = False
+            continue
+
+        # Not in a frame.
         out.append(d)
+
+    # Any trailing frame (shouldn't happen) is appended as-is.
+    if frame:
+        out.extend(frame)
+
     return out

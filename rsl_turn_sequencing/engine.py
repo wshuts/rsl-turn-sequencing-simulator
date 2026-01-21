@@ -1642,9 +1642,11 @@ def _emit_requested_mastery_procs_once(
     for item in requested:
         if not isinstance(item, dict):
             raise ValueError("mastery proc request items must be dicts")
-        if item.get("holder") != "Mikage":
+        holder = item.get("holder")
+        mastery = item.get("mastery")
+        if not isinstance(holder, str) or not holder.strip():
             continue
-        if item.get("mastery") != "rapid_response":
+        if not isinstance(mastery, str) or not mastery.strip():
             continue
         count = item.get("count")
         if not isinstance(count, int) or count <= 0:
@@ -1654,9 +1656,9 @@ def _emit_requested_mastery_procs_once(
 
         event_sink.emit(
             EventType.MASTERY_PROC,
-            actor="Mikage",
-            holder="Mikage",
-            mastery="rapid_response",
+            actor=str(holder),
+            holder=str(holder),
+            mastery=str(mastery),
             count=int(count),
             # Keep turn_counter for legacy observability (it is not used for scheduling).
             turn_counter=int(turn_counter),
@@ -1664,8 +1666,8 @@ def _emit_requested_mastery_procs_once(
 
         _apply_mastery_proc_effects(
             actors=actors,
-            holder="Mikage",
-            mastery="rapid_response",
+            holder=str(holder),
+            mastery=str(mastery),
             count=int(count),
         )
 
@@ -1683,19 +1685,25 @@ def _apply_mastery_proc_effects(
     """
     Effect-plane handler (minimal): apply deterministic effects for proc events.
     """
-    if (holder or "").strip() != "Mikage":
-        return
-    if (mastery or "").strip() != "rapid_response":
-        return
+    holder = (holder or "").strip()
+    mastery = (mastery or "").strip()
     if int(count) <= 0:
         return
 
-    mikage = next((a for a in actors if a.name == "Mikage"), None)
-    if mikage is None:
+    # Minimal deterministic mastery effects used by the simulator tests.
+    if holder == "Mikage" and mastery == "rapid_response":
+        a = next((x for x in actors if x.name == "Mikage"), None)
+        if a is None:
+            return
+        a.turn_meter += float(TM_GATE) * 0.10 * float(count)
         return
 
-    # Rapid Response: +10% turn meter per proc count.
-    mikage.turn_meter += float(TM_GATE) * 0.10 * float(count)
+    if holder == "Mithrala" and mastery == "arcane_celerity":
+        a = next((x for x in actors if x.name == "Mithrala"), None)
+        if a is None:
+            return
+        a.turn_meter += float(TM_GATE) * 0.10 * float(count)
+        return
 
 
 def step_tick(
