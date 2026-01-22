@@ -1,0 +1,126 @@
+{
+  "boss": {
+    "name": "Fire Knight",
+    "shield_max": 21,
+    "speed": 250,
+    "skill_sequence": [
+      "A2",
+      "A1",
+      "A1",
+      "A1",
+      "A1",
+      "A2"
+    ]
+  },
+  "champions": [
+    {
+      "slot": 1,
+      "name": "Mikage",
+      "speed": 343,
+      "skill_sequence": [
+        "A_A1",
+        "A_A4",
+        "B_A3",
+        "B_A1",
+        "B_A2",
+        "B_A1",
+        "B_A1",
+        "B_A3",
+        "B_A2",
+        "B_A1"
+      ],
+      "turn_overrides": {
+        "skill_sequence_steps": {
+          "3": {
+            "skill_id": "B_A3",
+            "allied_attack_outcomes": {
+              "effects_placed": [
+                {
+                  "placed_by": "Tomb Lord",
+                  "target": "Fire Knight",
+                  "effect_kind": "DECREASE_SPD",
+                  "magnitude": 0.30,
+                  "duration_turns": 2,
+                  "timing": "AFTER_SHIELD_OPEN",
+                  "requires": {
+                    "boss_shield_open": true
+                  },
+                  "reason": "Observed; Tomb Lord landed Decrease SPD during Mikage A3 allied attack after shield opened. ACC/RES gate succeeded here."
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "slot": 2,
+      "name": "Mithrala",
+      "speed": 282,
+      "skill_sequence": [
+        "A1",
+        "A1",
+        "A3",
+        "A2",
+        "A1",
+        "A3",
+        "A2"
+      ]
+    },
+    {
+      "slot": 3,
+      "name": "Martyr",
+      "speed": 253,
+      "skill_sequence": [
+        "A2",
+        "A1",
+        "A3",
+        "A2",
+        "A1",
+        "A1"
+      ]
+    },
+    {
+      "slot": 4,
+      "name": "Tomb Lord",
+      "speed": 257,
+      "skill_sequence": [
+        "A2",
+        "A3",
+        "A1",
+        "A1",
+        "A2",
+        "A1",
+        "A3"
+      ]
+    },
+    {
+      "slot": 5,
+      "name": "Coldheart",
+      "speed": 265,
+      "skill_sequence": [
+        "A1",
+        "A3",
+        "A1",
+        "A1",
+        "A1",
+        "A1",
+        "A3"
+      ]
+    }
+  ],
+  "options": {
+    "sequence_policy": "error_if_exhausted",
+    "max_turns": 100
+  },
+  "notes": {
+    "source": "With slowed boss - champs buffs expire - boss kills team early on",
+    "team_slot_order": [
+      "Mikage",
+      "Mithrala",
+      "Martyr",
+      "Tomb Lord",
+      "Coldheart"
+    ]
+  }
+}
